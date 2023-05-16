@@ -9,9 +9,8 @@ from sklearn.datasets import load_iris
 
 
 def get_data() -> DataFrame:
-    iris = load_iris()
-    result_df = DataFrame(iris.data, columns=iris.feature_names)
-    result_df['target'] = iris.target
+    result_df, target = load_iris(as_frame=True, return_X_y=True, )
+    result_df['target'] = target.replace({0: 'setosa', 1: 'versicolor', 2: 'virginica'})
     return result_df
 
 
@@ -20,7 +19,7 @@ def main():
                 format='%(asctime)s.%(msecs)03d - %(levelname)s - %(name)s - %(message)s', )
     logger = getLogger(name='main', )
     data_df = get_data()
-    logger.info(msg='columns: %s'.format(data_df.columns.tolist()))
+    logger.info(msg='columns: {}'.format(data_df.columns.tolist()))
     pairplot(data=data_df, hue='target')
     filename = OUTPUT_FOLDER + OUTPUT_FILE
     logger.info(msg='saving plot to {}'.format(filename))
