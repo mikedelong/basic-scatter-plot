@@ -24,7 +24,8 @@ def main():
     pairplot(data=data_df, hue='target')
     filename = OUTPUT_FOLDER + OUTPUT_FILE
     logger.info(msg='saving plot to {}'.format(filename))
-    savefig(format='png', fname=filename)
+    savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
+            format='png', metadata=None, pad_inches=0.1, )
 
 
 OUTPUT_FOLDER = './result/'
