@@ -2,6 +2,7 @@ from logging import INFO
 from logging import basicConfig
 from logging import getLogger
 
+from matplotlib.pyplot import close
 from matplotlib.pyplot import savefig
 from matplotlib.pyplot import text
 from matplotlib.pyplot import title
@@ -9,6 +10,7 @@ from matplotlib.pyplot import xlabel
 from matplotlib.pyplot import ylabel
 from pandas import DataFrame
 from pandas import read_excel
+from seaborn import barplot
 from seaborn import scatterplot
 
 
@@ -16,6 +18,18 @@ def get_data(url: str) -> DataFrame:
     result_df = read_excel(io=url, sheet_name='2022')
     result_df = result_df[result_df['Country'] != 'xx']
     return result_df
+
+
+def make_barplot(df: DataFrame):
+    logger = getLogger(name='make_barplot', )
+    melted_df = df.melt(id_vars=['Country'], value_vars=[item for item in df.columns if item.startswith('Explained')],
+                        var_name='Score', )
+    barplot(data=melted_df, x='Country', y='value', hue='Score', palette='colorblind', )
+    filename = OUTPUT_FOLDER + 'world_happiness_report_barplot.png'
+    logger.info(msg='saving plot to {}'.format(filename))
+    savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
+            format='png', metadata=None, pad_inches=0.1, )
+    close()
 
 
 def make_scatterplot(df: DataFrame):
@@ -30,6 +44,7 @@ def make_scatterplot(df: DataFrame):
     logger.info(msg='saving plot to {}'.format(filename))
     savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
             format='png', metadata=None, pad_inches=0.1, )
+    close()
 
 
 def main():
@@ -38,6 +53,7 @@ def main():
     logger = getLogger(name='main', )
     data_df = get_data(url=FIGURE_URL)
     make_scatterplot(df=data_df, )
+    make_barplot(df=data_df, )
 
     logger.info(msg='columns: {}'.format(data_df.columns.tolist()))
 
