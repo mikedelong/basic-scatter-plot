@@ -14,7 +14,22 @@ from seaborn import scatterplot
 
 def get_data(url: str) -> DataFrame:
     result_df = read_excel(io=url, sheet_name='2022')
+    result_df = result_df[result_df['Country'] != 'xx']
     return result_df
+
+
+def make_scatterplot(df: DataFrame):
+    logger = getLogger(name='make_scatterplot', )
+    scatterplot(data=df, x=FIGURE_X, y=FIGURE_Y, marker='')
+    title('Happiness Score (2022)')
+    xlabel(FIGURE_X.lower().capitalize())
+    ylabel(FIGURE_Y.split()[1].lower().capitalize())
+    for index, (rank, score) in enumerate(zip(df[FIGURE_X].values, df[FIGURE_Y].values)):
+        text(fontsize=5, ha='center', s=df['Country'].values[index], x=rank, y=score, )
+    filename = OUTPUT_FOLDER + OUTPUT_FILE
+    logger.info(msg='saving plot to {}'.format(filename))
+    savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
+            format='png', metadata=None, pad_inches=0.1, )
 
 
 def main():
@@ -22,21 +37,15 @@ def main():
                 format='%(asctime)s.%(msecs)03d - %(levelname)s - %(name)s - %(message)s', )
     logger = getLogger(name='main', )
     data_df = get_data(url=FIGURE_URL)
-    scatterplot(data=data_df, x='RANK', y='Happiness score', markers='')
-    title('Happiness Score (2022)')
-    xlabel('Rank')
-    ylabel('Score')
-    for index, (rank, score) in enumerate(zip(data_df['RANK'].values, data_df['Happiness score'].values)):
-        text(x=rank, y=score, s=data_df['Country'].values[index], ha='left', fontsize=5)
-    filename = OUTPUT_FOLDER + OUTPUT_FILE
-    logger.info(msg='saving plot to {}'.format(filename))
-    savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
-            format='png', metadata=None, pad_inches=0.1, )
+    make_scatterplot(df=data_df, )
 
     logger.info(msg='columns: {}'.format(data_df.columns.tolist()))
 
 
+DEBUG = {}
 FIGURE_URL = 'https://happiness-report.s3.amazonaws.com/2022/Appendix_2_Data_for_Figure_2.1.xls'
+FIGURE_X = 'RANK'
+FIGURE_Y = 'Happiness score'
 OUTPUT_FOLDER = './result/'
 OUTPUT_FILE = 'world_happiness_report_figure.png'
 TABLE_URL = 'https://happiness-report.s3.amazonaws.com/2022/DataForTable2.1.xls'
