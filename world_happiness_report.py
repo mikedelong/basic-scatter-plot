@@ -46,21 +46,25 @@ def make_pairplot(df: DataFrame):
         'Explained by: Perceptions of corruption': 'Corruption',
     }
     plot_df = df.drop(columns=drop_columns).rename(columns=rename_columns, )
-    pairplot(data=plot_df, hue='Country')
-    filename = OUTPUT_FOLDER + PAIRPLOT_FILE
-    logger.info(msg='saving plot to {}'.format(filename))
-    savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
-            format='png', metadata=None, pad_inches=0.1, )
-    close()
+    for item in [(plot_df, PAIRPLOT_FILE),
+                 (plot_df[plot_df['Country'].isin(EUROPE)], PAIRPLOT_EUROPE_FILE),]:
+        pairplot(data=item[0], hue='Country', palette='RdBu',)
+        filename = OUTPUT_FOLDER + item[1]
+        logger.info(msg='saving plot to {}'.format(filename))
+        savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
+                format='png', metadata=None, pad_inches=0.1, )
+        close()
 
 
 def make_scatterplot(df: DataFrame):
     logger = getLogger(name='make_scatterplot', )
-    scatterplot(data=df, x=FIGURE_X, y=FIGURE_Y, marker='')
+    scatter_x = 'RANK'
+    scatter_y = 'Happiness score'
+    scatterplot(data=df, marker='', x=scatter_x, y=scatter_y, )
     title('Happiness Score (2022)')
-    xlabel(FIGURE_X.lower().capitalize())
-    ylabel(FIGURE_Y.split()[1].lower().capitalize())
-    for index, (rank, score) in enumerate(zip(df[FIGURE_X].values, df[FIGURE_Y].values)):
+    xlabel(scatter_x.lower().capitalize())
+    ylabel(scatter_y.split()[1].lower().capitalize())
+    for index, (rank, score) in enumerate(zip(df[scatter_x].values, df[scatter_y].values)):
         text(fontsize=5, ha='center', s=df['Country'].values[index], x=rank, y=score, )
     filename = OUTPUT_FOLDER + SCATTERPLOT_FILE
     logger.info(msg='saving plot to {}'.format(filename))
@@ -88,11 +92,34 @@ COLUMNS = ['RANK', 'Country', 'Happiness score', 'Whisker-high', 'Whisker-low', 
            'Explained by: GDP per capita', 'Explained by: Social support', 'Explained by: Healthy life expectancy',
            'Explained by: Freedom to make life choices', 'Explained by: Generosity',
            'Explained by: Perceptions of corruption', ]
+COUNTRIES = ['Finland', 'Denmark', 'Iceland', 'Switzerland', 'Netherlands', 'Luxembourg*', 'Sweden', 'Norway', 'Israel',
+             'New Zealand', 'Austria', 'Australia', 'Ireland', 'Germany', 'Canada', 'United States', 'United Kingdom',
+             'Czechia', 'Belgium', 'France', 'Bahrain', 'Slovenia', 'Costa Rica', 'United Arab Emirates',
+             'Saudi Arabia', 'Taiwan Province of China', 'Singapore', 'Romania', 'Spain', 'Uruguay', 'Italy', 'Kosovo',
+             'Malta', 'Lithuania', 'Slovakia', 'Estonia', 'Panama', 'Brazil', 'Guatemala*', 'Kazakhstan', 'Cyprus',
+             'Latvia', 'Serbia', 'Chile', 'Nicaragua', 'Mexico', 'Croatia', 'Poland', 'El Salvador', 'Kuwait*',
+             'Hungary', 'Mauritius', 'Uzbekistan', 'Japan', 'Honduras', 'Portugal', 'Argentina', 'Greece',
+             'South Korea', 'Philippines', 'Thailand', 'Moldova', 'Jamaica', 'Kyrgyzstan', 'Belarus*', 'Colombia',
+             'Bosnia and Herzegovina', 'Mongolia', 'Dominican Republic', 'Malaysia', 'Bolivia', 'China', 'Paraguay',
+             'Peru', 'Montenegro', 'Ecuador', 'Vietnam', 'Turkmenistan*', 'North Cyprus*', 'Russia',
+             'Hong Kong S.A.R. of China', 'Armenia', 'Tajikistan', 'Nepal', 'Bulgaria', 'Libya*', 'Indonesia',
+             'Ivory Coast', 'North Macedonia', 'Albania', 'South Africa', 'Azerbaijan*', 'Gambia*', 'Bangladesh',
+             'Laos', 'Algeria', 'Liberia*', 'Ukraine', 'Congo', 'Morocco', 'Mozambique', 'Cameroon', 'Senegal',
+             'Niger*', 'Georgia', 'Gabon', 'Iraq', 'Venezuela', 'Guinea', 'Iran', 'Ghana', 'Turkey', 'Burkina Faso',
+             'Cambodia', 'Benin', 'Comoros*', 'Uganda', 'Nigeria', 'Kenya', 'Tunisia', 'Pakistan',
+             'Palestinian Territories*', 'Mali', 'Namibia', 'Eswatini, Kingdom of*', 'Myanmar', 'Sri Lanka',
+             'Madagascar*', 'Egypt', 'Chad*', 'Ethiopia', 'Yemen*', 'Mauritania*', 'Jordan', 'Togo', 'India', 'Zambia',
+             'Malawi', 'Tanzania', 'Sierra Leone', 'Lesotho*', 'Botswana*', 'Rwanda*', 'Zimbabwe', 'Lebanon',
+             'Afghanistan']
 DEBUG = {}
+EUROPE = ['Finland', 'Denmark', 'Iceland', 'Switzerland', 'Netherlands', 'Luxembourg*', 'Sweden', 'Norway', 'Austria',
+          'Ireland', 'Germany', 'United Kingdom', 'Czechia', 'Belgium', 'France', 'Slovenia', 'Costa Rica', 'Romania',
+          'Spain', 'Italy', 'Kosovo', 'Malta', 'Lithuania', 'Slovakia', 'Estonia', 'Cyprus', 'Latvia', 'Serbia',
+          'Croatia', 'Poland', 'Hungary', 'Portugal', 'Greece', 'Moldova', 'Belarus*', 'Bosnia and Herzegovina',
+          'Montenegro', 'North Cyprus*', 'Russia', 'Bulgaria', 'North Macedonia', 'Albania', 'Ukraine', ]
 FIGURE_URL = 'https://happiness-report.s3.amazonaws.com/2022/Appendix_2_Data_for_Figure_2.1.xls'
-FIGURE_X = 'RANK'
-FIGURE_Y = 'Happiness score'
 OUTPUT_FOLDER = './result/'
+PAIRPLOT_EUROPE_FILE = 'world_happiness_report_pairplot_europe.png'
 PAIRPLOT_FILE = 'world_happiness_report_pairplot.png'
 SCATTERPLOT_FILE = 'world_happiness_report_scatterplot.png'
 TABLE_URL = 'https://happiness-report.s3.amazonaws.com/2022/DataForTable2.1.xls'
