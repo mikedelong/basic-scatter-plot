@@ -11,6 +11,7 @@ from matplotlib.pyplot import ylabel
 from pandas import DataFrame
 from pandas import read_excel
 from seaborn import barplot
+from seaborn import pairplot
 from seaborn import scatterplot
 
 
@@ -22,10 +23,30 @@ def get_data(url: str) -> DataFrame:
 
 def make_barplot(df: DataFrame):
     logger = getLogger(name='make_barplot', )
-    melted_df = df.melt(id_vars=['Country'], value_vars=[item for item in df.columns if item.startswith('Explained')],
-                        var_name='Score', )
+    value_vars = [item for item in df.columns if item.startswith('Explained')]
+    melted_df = df.melt(id_vars=['Country'], value_vars=value_vars, var_name='Score', )
     barplot(data=melted_df, x='Country', y='value', hue='Score', palette='colorblind', )
     filename = OUTPUT_FOLDER + 'world_happiness_report_barplot.png'
+    logger.info(msg='saving plot to {}'.format(filename))
+    savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
+            format='png', metadata=None, pad_inches=0.1, )
+    close()
+
+
+def make_pairplot(df: DataFrame):
+    logger = getLogger(name='make_pairplot', )
+    plot_df = df.drop(columns=['RANK', 'Happiness score', 'Whisker-high', 'Whisker-low',
+                               'Dystopia (1.83) + residual',
+                               ]).rename(columns={
+        'Explained by: GDP per capita': 'GDP',
+        'Explained by: Social support': 'Social',
+        'Explained by: Healthy life expectancy': 'Health',
+        'Explained by: Freedom to make life choices': 'Freedom',
+        'Explained by: Generosity': 'Generosity',
+        'Explained by: Perceptions of corruption': 'Corruption',
+    })
+    pairplot(data=plot_df, hue='Country')
+    filename = OUTPUT_FOLDER + 'world_happiness_report_pairplot.png'
     logger.info(msg='saving plot to {}'.format(filename))
     savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
             format='png', metadata=None, pad_inches=0.1, )
@@ -52,8 +73,10 @@ def main():
                 format='%(asctime)s.%(msecs)03d - %(levelname)s - %(name)s - %(message)s', )
     logger = getLogger(name='main', )
     data_df = get_data(url=FIGURE_URL)
-    make_scatterplot(df=data_df, )
+    DEBUG['data'] = data_df
     make_barplot(df=data_df, )
+    make_pairplot(df=data_df, )
+    make_scatterplot(df=data_df, )
 
     logger.info(msg='columns: {}'.format(data_df.columns.tolist()))
 
