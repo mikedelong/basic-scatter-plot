@@ -36,19 +36,13 @@ def make_barplot(df: DataFrame):
 
 def make_pairplot(df: DataFrame):
     logger = getLogger(name='make_pairplot', )
-    drop_columns = ['RANK', 'Happiness score', 'Whisker-high', 'Whisker-low', 'Dystopia (1.83) + residual', ]
-    rename_columns = {
-        'Explained by: GDP per capita': 'GDP',
-        'Explained by: Social support': 'Social',
-        'Explained by: Healthy life expectancy': 'Health',
-        'Explained by: Freedom to make life choices': 'Freedom',
-        'Explained by: Generosity': 'Generosity',
-        'Explained by: Perceptions of corruption': 'Corruption',
-    }
-    plot_df = df.drop(columns=drop_columns).rename(columns=rename_columns, )
-    for item in [(plot_df, PAIRPLOT_FILE),
-                 (plot_df[plot_df['Country'].isin(EUROPE)], PAIRPLOT_EUROPE_FILE),]:
-        pairplot(data=item[0], hue='Country', palette='RdBu',)
+    plot_df = df.drop(columns=PAIRPLOT_DROP_COLUMNS, ).rename(columns=PAIRPLOT_REPLACE_COLUMNS, )
+    for item in [
+        (plot_df, PAIRPLOT_FILE,),
+        (plot_df[plot_df['Country'].isin(EUROPE)], PAIRPLOT_EUROPE_FILE,),
+        (plot_df[plot_df['Country'].isin(LARGE_ECONOMIES)], PAIRPLOT_LARGE_FILE,),
+    ]:
+        pairplot(data=item[0], hue='Country', palette='RdBu', )
         filename = OUTPUT_FOLDER + item[1]
         logger.info(msg='saving plot to {}'.format(filename))
         savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
@@ -118,9 +112,21 @@ EUROPE = ['Finland', 'Denmark', 'Iceland', 'Switzerland', 'Netherlands', 'Luxemb
           'Croatia', 'Poland', 'Hungary', 'Portugal', 'Greece', 'Moldova', 'Belarus*', 'Bosnia and Herzegovina',
           'Montenegro', 'North Cyprus*', 'Russia', 'Bulgaria', 'North Macedonia', 'Albania', 'Ukraine', ]
 FIGURE_URL = 'https://happiness-report.s3.amazonaws.com/2022/Appendix_2_Data_for_Figure_2.1.xls'
+LARGE_ECONOMIES = ['United States', 'China', 'Japan', 'Germany', 'United Kingdom', 'India', 'France', 'Canada', 'Italy',
+                   'Brazil', ]
 OUTPUT_FOLDER = './result/'
+PAIRPLOT_DROP_COLUMNS = ['RANK', 'Happiness score', 'Whisker-high', 'Whisker-low', 'Dystopia (1.83) + residual', ]
 PAIRPLOT_EUROPE_FILE = 'world_happiness_report_pairplot_europe.png'
 PAIRPLOT_FILE = 'world_happiness_report_pairplot.png'
+PAIRPLOT_LARGE_FILE = 'world_happiness_report_pairplot_large.png'
+PAIRPLOT_REPLACE_COLUMNS = {
+    'Explained by: GDP per capita': 'GDP',
+    'Explained by: Social support': 'Social',
+    'Explained by: Healthy life expectancy': 'Health',
+    'Explained by: Freedom to make life choices': 'Freedom',
+    'Explained by: Generosity': 'Generosity',
+    'Explained by: Perceptions of corruption': 'Corruption',
+}
 SCATTERPLOT_FILE = 'world_happiness_report_scatterplot.png'
 TABLE_URL = 'https://happiness-report.s3.amazonaws.com/2022/DataForTable2.1.xls'
 
