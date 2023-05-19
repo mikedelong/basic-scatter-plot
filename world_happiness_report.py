@@ -42,7 +42,9 @@ def make_pairplot(df: DataFrame):
         (plot_df[plot_df['Country'].isin(EUROPE)], PAIRPLOT_EUROPE_FILE,),
         (plot_df[plot_df['Country'].isin(LARGE_ECONOMIES)], PAIRPLOT_LARGE_FILE,),
     ]:
-        pairplot(data=item[0], hue='Country', palette='RdBu', )
+        diag_kind = None
+        kind = 'scatter'
+        pairplot(corner=True, data=item[0], diag_kind=diag_kind, hue='Country', kind=kind, palette='RdBu', )
         filename = OUTPUT_FOLDER + item[1]
         logger.info(msg='saving plot to {}'.format(filename))
         savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
