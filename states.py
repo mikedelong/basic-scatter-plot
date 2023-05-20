@@ -31,7 +31,7 @@ def make_pairplot(df: DataFrame):
     logger = getLogger(name='make_pairplot', )
     logger.info(msg='columns: {}'.format(df.columns.tolist()))
     for filename in [OUTPUT_FOLDER + PAIRPLOT_FILE]:
-        pairplot(data=df, corner=True, )
+        pairplot(corner=True, data=df, diag_kind='kde', )
         logger.info(msg='saving plot to {}'.format(filename))
         savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
                 format='png', metadata=None, pad_inches=0.1, )
