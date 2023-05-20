@@ -13,8 +13,8 @@ from seaborn import pairplot
 def get_data() -> DataFrame:
     result_df = read_html(io=URL, header=0)[0]
     columns = ['Rank', 'Rank.1', 'Census population[8][a].1', 'Census population[8][a].2',
-               'Change, 2010–2020[8][a]','Change, 2010–2020[8][a].1',  'House of Reps. from the 2022 elections.1',
-               'Pop. per elec. vote, 2020[b] from the 2022 elections',  'Census pop. per seat[a].1',
+               'Change, 2010–2020[8][a]', 'Change, 2010–2020[8][a].1', 'House of Reps. from the 2022 elections.1',
+               'Pop. per elec. vote, 2020[b] from the 2022 elections', 'Census pop. per seat[a].1',
                '% of the total U.S. pop.[c]', '% of the total U.S. pop.[c].1', '% of Elec. Coll.']
     index = [0, 31, 50, 53, 54, 55, 56, 57, 58, 59, 60]
     result_df = result_df.drop(columns=columns).drop(index=index, ).reset_index().drop(columns=['index'])
