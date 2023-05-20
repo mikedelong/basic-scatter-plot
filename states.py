@@ -28,15 +28,10 @@ def get_data() -> DataFrame:
 
 
 def make_pairplot(df: DataFrame):
-    logger = getLogger(name='make_pca_scatter', )
+    logger = getLogger(name='make_pairplot', )
     logger.info(msg='columns: {}'.format(df.columns.tolist()))
-    for (model, filename) in [
-    ]:
-        pixel_columns = [column for column in df.columns if column.startswith('pixel')]
-        projection = model.fit_transform(X=df[pixel_columns])
-        projection_df = DataFrame(data=projection, columns=['x', 'y'])
-        projection_df['class'] = df['class']
-        pairplot(data=projection_df, palette='colorblind', )
+    for filename in [OUTPUT_FOLDER + PAIRPLOT_FILE]:
+        pairplot(data=df, corner=True, )
         logger.info(msg='saving plot to {}'.format(filename))
         savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
                 format='png', metadata=None, pad_inches=0.1, )
@@ -56,6 +51,7 @@ def main():
 
 DEBUG = {}
 OUTPUT_FOLDER = './result/'
+PAIRPLOT_FILE = 'states.pairplot.png'
 URL = 'https://en.wikipedia.org/wiki/List_of_U.S._states_and_territories_by_population#State_and_territory_rankings'
 if __name__ == '__main__':
     main()
