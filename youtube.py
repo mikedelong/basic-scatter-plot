@@ -4,6 +4,7 @@ from logging import INFO
 from logging import basicConfig
 from logging import getLogger
 from re import findall
+from typing import Generator
 
 from arrow import now
 from matplotlib.pyplot import close
@@ -13,10 +14,18 @@ from scrapetube import get_channel
 from seaborn import scatterplot
 
 
-def get_data(channel_id: str) -> DataFrame:
+def get_generator(channel: str, channel_kind: str, ) -> Generator:
+    if channel_kind == 'id':
+        return get_channel(channel_id=channel, )
+    elif channel_kind == 'url':
+        return get_channel(channel_url=channel)
+    else:
+        raise NotImplementedError(channel_kind)
+
+
+def get_data_from_generator(videos: Generator) -> DataFrame:
     arrow_now = now()
-    logger = getLogger(name='get_data')
-    videos = get_channel(channel_id=channel_id)
+    logger = getLogger(name='get_data_from_url')
 
     video_ids = []
     published_time = []
@@ -58,7 +67,9 @@ def main():
     with open(file='youtube.json', mode='r', ) as input_fp:
         settings = load(fp=input_fp, )
 
-    videos_df = get_data(channel_id=settings['channel_id'])
+    videos_generator = get_generator(channel=settings['channel_url'], channel_kind='url', )
+    videos_df = get_data_from_generator(videos=videos_generator, )
+
     scatterplot(data=videos_df, x='published_date', y='view_count', )
     filename = OUTPUT_FOLDER + FILENAME
     logger.info(msg='saving plot to {}'.format(filename))
