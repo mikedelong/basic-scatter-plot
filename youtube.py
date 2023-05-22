@@ -13,6 +13,9 @@ from pandas import DataFrame
 from scrapetube import get_channel
 from seaborn import scatterplot
 
+from requests_html import HTMLSession
+from bs4 import BeautifulSoup as bs # importing BeautifulSoup
+
 
 def get_generator(channel: str, channel_kind: str, ) -> Generator:
     if channel_kind == 'id':
@@ -21,6 +24,10 @@ def get_generator(channel: str, channel_kind: str, ) -> Generator:
         return get_channel(channel_url=channel)
     else:
         raise NotImplementedError(channel_kind)
+
+
+def alt(videos: Generator) -> DataFrame:
+    return DataFrame()
 
 
 def get_data_from_generator(videos: Generator) -> DataFrame:
