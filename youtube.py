@@ -6,8 +6,11 @@ from logging import getLogger
 from re import findall
 
 from arrow import now
+from matplotlib.pyplot import close
+from matplotlib.pyplot import savefig
 from pandas import DataFrame
 from scrapetube import get_channel
+from seaborn import scatterplot
 
 
 def get_data(channel_id: str) -> DataFrame:
@@ -56,11 +59,20 @@ def main():
         settings = load(fp=input_fp, )
 
     videos_df = get_data(channel_id=settings['channel_id'])
+    scatterplot(data=videos_df, x='published_date', y='view_count', )
+    filename = OUTPUT_FOLDER + FILENAME
+    logger.info(msg='saving plot to {}'.format(filename))
+    savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
+            format='png', metadata=None, pad_inches=0.1, )
+    close()
 
     time_seconds = (now() - time_start).total_seconds()
     logger.info(msg='done: {:02d}:{:05.2f}'.format(int(time_seconds // 60), time_seconds % 60))
 
 
 DEBUG = {}
+FILENAME = 'youtube.scatterplot.png'
+OUTPUT_FOLDER = './result/'
+
 if __name__ == '__main__':
     main()
