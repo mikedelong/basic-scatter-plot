@@ -1,3 +1,4 @@
+import math
 from logging import INFO
 from logging import basicConfig
 from logging import getLogger
@@ -8,6 +9,7 @@ from matplotlib.pyplot import savefig
 from matplotlib.pyplot import scatter
 from pandas import read_csv
 from pandas import to_datetime
+from matplotlib.pyplot import ylabel
 
 
 def main():
@@ -17,9 +19,11 @@ def main():
     logger = getLogger(name='main', )
 
     videos_df = read_csv(filepath_or_buffer='./videos.csv', usecols=['published', 'views'])
+    videos_df['log10_views'] = videos_df['views'].apply(math.log10)
     videos_df['published'] = to_datetime(arg=videos_df['published'], )
     videos_df = videos_df.sort_values(by='published', )
-    scatter(data=videos_df, x='published', y='views', )
+    scatter(data=videos_df, x='published', y='log10_views', )
+    ylabel(ylabel='log10 views')
     filename = OUTPUT_FOLDER + FILENAME
     logger.info(msg='saving plot to {}'.format(filename), )
     savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
