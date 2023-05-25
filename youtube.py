@@ -55,8 +55,13 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
     result_df['published'] = to_datetime(arg=result_df['published'], )
     result_df['views'] = result_df['views'].astype(int)
     result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else math.log10(x))
-    result_df =  result_df.sort_values(by='published', )
+    result_df = result_df.sort_values(by='published', )
     return result_df
+
+
+def today_as_string() -> str:
+    time_now = now()
+    return '{}-{:02d}{:02d}'.format(time_now.date().year, time_now.date().month, time_now.date().day, )
 
 
 def main():
@@ -72,7 +77,7 @@ def main():
     videos_df.to_csv(index=False, path_or_buf='./videos.csv', )
 
     scatterplot(data=videos_df, x='published', y='views', )
-    filename = OUTPUT_FOLDER + FILENAME
+    filename = OUTPUT_FOLDER + '-'.join([today_as_string(), FILENAME])
     logger.info(msg='saving plot to {}'.format(filename))
     savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
             format='png', metadata=None, pad_inches=0.1, )
@@ -83,7 +88,7 @@ def main():
 
 
 DEBUG = {}
-FILENAME = 'youtube.scatterplot.png'
+FILENAME = 'youtube-scatterplot.png'
 OUTPUT_FOLDER = './result/'
 
 if __name__ == '__main__':
