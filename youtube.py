@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 from json import load
 from logging import INFO
@@ -28,7 +29,6 @@ def get_generator(channel: str, channel_kind: str, ) -> Generator:
 
 # todo get other columns of data including name, upload date, video ID, etc.
 # todo figure out how to encode the channel name
-# todo report both the view count and the log thereof
 
 def get_data_from_generator(videos: Generator) -> DataFrame:
     logger = getLogger(name='get_data_from_generator')
@@ -54,6 +54,7 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
     result_df = DataFrame(data={'id': video_ids, 'views': views, 'published': date_published})
     result_df['published'] = to_datetime(arg=result_df['published'], )
     result_df['views'] = result_df['views'].astype(int)
+    result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else math.log10(x))
     result_df =  result_df.sort_values(by='published', )
     return result_df
 
