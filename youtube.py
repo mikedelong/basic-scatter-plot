@@ -32,9 +32,10 @@ def get_generator(channel: str, channel_kind: str, ) -> Generator:
 
 def get_data_from_generator(videos: Generator) -> DataFrame:
     logger = getLogger(name='get_data_from_generator')
+    date_published = []
+    names = []
     video_ids = []
     views = []
-    date_published = []
     for video in videos:
         video_id = video['videoId']
         url = 'https://youtu.be/{}'.format(video_id)
@@ -44,14 +45,15 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
                 response = session.get(url=url, )
                 response.html.render(sleep=1)
                 soup = bs(response.html.html, 'html.parser')
+                date_published.append(soup.find('meta', itemprop='datePublished')['content'])
                 video_ids.append(video_id)
                 views.append(soup.find('meta', itemprop='interactionCount')['content'])
-                date_published.append(soup.find('meta', itemprop='datePublished')['content'])
+                names.append(soup.find('meta', itemprop='name')['content'])
         except TimeoutError as timeout_error:
             logger.warning(timeout_error)
 
     date_published = [datetime.strptime(item, '%Y-%m-%d') for item in date_published]
-    result_df = DataFrame(data={'id': video_ids, 'views': views, 'published': date_published})
+    result_df = DataFrame(data={'id': video_ids, 'views': views, 'published': date_published, 'name': names})
     result_df['published'] = to_datetime(arg=result_df['published'], )
     result_df['views'] = result_df['views'].astype(int)
     result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else math.log10(x))
@@ -74,10 +76,11 @@ def main():
 
     videos_generator = get_generator(channel=settings['channel_url'], channel_kind='url', )
     videos_df = get_data_from_generator(videos=videos_generator, )
-    videos_df.to_csv(index=False, path_or_buf='./videos.csv', )
+    filename = DATA_FOLDER + '-'.join([today_as_string(), DATA_FILENAME])
+    videos_df.to_csv(index=False, path_or_buf=filename, )
 
     scatterplot(data=videos_df, x='published', y='views', )
-    filename = OUTPUT_FOLDER + '-'.join([today_as_string(), FILENAME])
+    filename = OUTPUT_FOLDER + '-'.join([today_as_string(), PLOT_FILENAME])
     logger.info(msg='saving plot to {}'.format(filename))
     savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
             format='png', metadata=None, pad_inches=0.1, )
@@ -87,8 +90,10 @@ def main():
     logger.info(msg='done: {:02d}:{:05.2f}'.format(int(time_seconds // 60), time_seconds % 60))
 
 
+DATA_FILENAME = 'youtube-data.csv'
+DATA_FOLDER = './data/'
 DEBUG = {}
-FILENAME = 'youtube-scatterplot.png'
+PLOT_FILENAME = 'youtube-scatterplot.png'
 OUTPUT_FOLDER = './result/'
 
 if __name__ == '__main__':
