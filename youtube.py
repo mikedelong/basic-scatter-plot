@@ -1,4 +1,5 @@
 import math
+from binascii import hexlify
 from json import load
 from logging import INFO
 from logging import basicConfig
@@ -6,7 +7,7 @@ from logging import getLogger
 from typing import Generator
 
 from arrow import now
-from bs4 import BeautifulSoup as bs
+from bs4 import BeautifulSoup
 from bs4.element import ResultSet
 from matplotlib.pyplot import close
 from matplotlib.pyplot import savefig
@@ -27,8 +28,6 @@ def get_generator(channel: str, channel_kind: str, ) -> Generator:
     else:
         raise NotImplementedError(channel_kind)
 
-
-# todo figure out how to encode the channel name
 
 def tags_to_dict(tags: ResultSet, ) -> dict:
     result = {}
@@ -53,7 +52,7 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
             with HTMLSession() as session:
                 response = session.get(url=url, )
                 response.html.render(sleep=1)
-                soup = bs(response.html.html, 'html.parser')
+                soup = BeautifulSoup(response.html.html, 'html.parser')
                 DEBUG['soup'] = soup
                 tags = soup.find_all(name='meta', )
                 result.append(Series(data=tags_to_dict(tags, )))
@@ -66,6 +65,16 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
     result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else round(math.log10(x), 2))
     result_df = result_df.sort_values(by='published', )
     return result_df
+
+
+def get_representation(settings: dict, kind: str) -> str:
+    if kind == 'id':
+        return settings['channel_id']
+    elif kind == 'url':
+        url_as_bytes = bytes(settings['channel_url'], encoding='utf-8', )
+        return hexlify(url_as_bytes, ).decode(encoding='utf-8')
+    else:
+        raise NotImplementedError(kind)
 
 
 def today_as_string() -> str:
@@ -81,13 +90,15 @@ def main():
     with open(file='youtube.json', mode='r', ) as input_fp:
         settings = load(fp=input_fp, )
 
-    videos_generator = get_generator(channel=settings['channel_url'], channel_kind='url', )
+    channel_kind = 'url'
+    videos_generator = get_generator(channel=settings['channel_url'], channel_kind=channel_kind, )
     videos_df = get_data_from_generator(videos=videos_generator, )
-    filename = DATA_FOLDER + '-'.join([today_as_string(), DATA_FILENAME])
+    representation = get_representation(settings, channel_kind)
+    filename = DATA_FOLDER + '-'.join([today_as_string(), channel_kind, representation, DATA_FILENAME])
     videos_df.to_csv(index=False, path_or_buf=filename, )
 
     scatterplot(data=videos_df, x='published', y='views', )
-    filename = OUTPUT_FOLDER + '-'.join([today_as_string(), PLOT_FILENAME])
+    filename = OUTPUT_FOLDER + '-'.join([today_as_string(), channel_kind, representation, PLOT_FILENAME])
     logger.info(msg='saving plot to {}'.format(filename))
     savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
             format='png', metadata=None, pad_inches=0.1, )
