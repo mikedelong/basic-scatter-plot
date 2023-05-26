@@ -1,5 +1,4 @@
 import math
-from datetime import datetime
 from json import load
 from logging import INFO
 from logging import basicConfig
@@ -8,9 +7,11 @@ from typing import Generator
 
 from arrow import now
 from bs4 import BeautifulSoup as bs
+from bs4.element import ResultSet
 from matplotlib.pyplot import close
 from matplotlib.pyplot import savefig
 from pandas import DataFrame
+from pandas import Series
 from pandas import to_datetime
 from pyppeteer.errors import TimeoutError
 from requests_html import HTMLSession
@@ -27,15 +28,23 @@ def get_generator(channel: str, channel_kind: str, ) -> Generator:
         raise NotImplementedError(channel_kind)
 
 
-# todo get other columns of data including name, upload date, video ID, etc.
 # todo figure out how to encode the channel name
+
+def tags_to_dict(tags: ResultSet, ) -> dict:
+    result = {}
+    for tag in tags:
+        if tag.get('property'):
+            result[tag['property']] = tag['content']
+        elif tag.get('name'):
+            result[tag['name']] = tag['content']
+        elif tag.get('itemprop'):
+            result[tag['itemprop']] = tag['content']
+    return result
+
 
 def get_data_from_generator(videos: Generator) -> DataFrame:
     logger = getLogger(name='get_data_from_generator')
-    date_published = []
-    names = []
-    video_ids = []
-    views = []
+    result = []
     for video in videos:
         video_id = video['videoId']
         url = 'https://youtu.be/{}'.format(video_id)
@@ -45,18 +54,16 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
                 response = session.get(url=url, )
                 response.html.render(sleep=1)
                 soup = bs(response.html.html, 'html.parser')
-                date_published.append(soup.find('meta', itemprop='datePublished')['content'])
-                video_ids.append(video_id)
-                views.append(soup.find('meta', itemprop='interactionCount')['content'])
-                names.append(soup.find('meta', itemprop='name')['content'])
+                DEBUG['soup'] = soup
+                tags = soup.find_all(name='meta', )
+                result.append(Series(data=tags_to_dict(tags, )))
         except TimeoutError as timeout_error:
             logger.warning(timeout_error)
-
-    date_published = [datetime.strptime(item, '%Y-%m-%d') for item in date_published]
-    result_df = DataFrame(data={'id': video_ids, 'views': views, 'published': date_published, 'name': names})
-    result_df['published'] = to_datetime(arg=result_df['published'], )
-    result_df['views'] = result_df['views'].astype(int)
-    result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else math.log10(x))
+    result_df = DataFrame(data=result, )
+    DEBUG['result_df'] = result_df
+    result_df['published'] = to_datetime(arg=result_df['datePublished'], )
+    result_df['views'] = result_df['interactionCount'].astype(int)
+    result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else round(math.log10(x), 2))
     result_df = result_df.sort_values(by='published', )
     return result_df
 
