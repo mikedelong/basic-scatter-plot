@@ -45,8 +45,7 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
     logger = getLogger(name='get_data_from_generator')
     result = []
     for video in videos:
-        video_id = video['videoId']
-        url = 'https://youtu.be/{}'.format(video_id)
+        url = 'https://youtu.be/{}'.format(video['videoId'])
         logger.info(msg=url, )
         try:
             with HTMLSession() as session:
