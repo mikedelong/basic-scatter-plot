@@ -53,8 +53,7 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
                 response.html.render(sleep=1)
                 soup = BeautifulSoup(response.html.html, 'html.parser')
                 DEBUG['soup'] = soup
-                tags = soup.find_all(name='meta', )
-                result.append(Series(data=tags_to_dict(tags, )))
+                result.append(Series(data=tags_to_dict(soup.find_all(name='meta', ), )))
         except TimeoutError as timeout_error:
             logger.warning(timeout_error)
     result_df = DataFrame(data=result, )
