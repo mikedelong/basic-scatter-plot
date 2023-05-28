@@ -1,5 +1,4 @@
 import math
-from binascii import hexlify
 from json import load
 from logging import INFO
 from logging import basicConfig
@@ -69,8 +68,9 @@ def get_representation(settings: dict, kind: str) -> str:
     if kind == 'id':
         return settings['channel_id']
     elif kind == 'url':
-        url_as_bytes = bytes(settings['channel_url'], encoding='utf-8', )
-        return hexlify(url_as_bytes, ).decode(encoding='utf-8')
+        pieces = settings['channel_url'].split('/')
+        result = [piece for piece in pieces if piece.startswith('@')][0]
+        return result
     else:
         raise NotImplementedError(kind)
 
@@ -90,8 +90,8 @@ def main():
 
     channel_kind = 'url'
     videos_generator = get_generator(channel=settings['channel_url'], channel_kind=channel_kind, )
-    videos_df = get_data_from_generator(videos=videos_generator, )
     representation = get_representation(settings, channel_kind)
+    videos_df = get_data_from_generator(videos=videos_generator, )
     filename = DATA_FOLDER + '-'.join([today_as_string(), channel_kind, representation, DATA_FILENAME])
     videos_df.to_csv(index=False, path_or_buf=filename, )
 
