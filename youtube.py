@@ -1,8 +1,8 @@
-import math
 from json import load
 from logging import INFO
 from logging import basicConfig
 from logging import getLogger
+from math import log10
 from typing import Generator
 
 from arrow import now
@@ -19,17 +19,16 @@ from scrapetube import get_channel
 from seaborn import scatterplot
 
 
-
-
 def get_data_from_generator(videos: Generator) -> DataFrame:
     result = [get_meta_from_url(url='https://youtu.be/{}'.format(video['videoId'])) for video in videos]
     result_df = DataFrame(data=result, )
     DEBUG['result_df'] = result_df
     result_df['published'] = to_datetime(arg=result_df['datePublished'], )
     result_df['views'] = result_df['interactionCount'].astype(int)
-    result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else round(math.log10(x), 2))
+    result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else round(log10(x), 2))
     result_df = result_df.sort_values(by='published', )
     return result_df
+
 
 def get_generator(channel: str, channel_kind: str, ) -> Generator:
     if channel_kind == 'id':
