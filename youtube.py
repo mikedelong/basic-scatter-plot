@@ -19,6 +19,18 @@ from scrapetube import get_channel
 from seaborn import scatterplot
 
 
+
+
+def get_data_from_generator(videos: Generator) -> DataFrame:
+    result = [get_meta_from_url(url='https://youtu.be/{}'.format(video['videoId'])) for video in videos]
+    result_df = DataFrame(data=result, )
+    DEBUG['result_df'] = result_df
+    result_df['published'] = to_datetime(arg=result_df['datePublished'], )
+    result_df['views'] = result_df['interactionCount'].astype(int)
+    result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else round(math.log10(x), 2))
+    result_df = result_df.sort_values(by='published', )
+    return result_df
+
 def get_generator(channel: str, channel_kind: str, ) -> Generator:
     if channel_kind == 'id':
         return get_channel(channel_id=channel, )
@@ -26,6 +38,33 @@ def get_generator(channel: str, channel_kind: str, ) -> Generator:
         return get_channel(channel_url=channel)
     else:
         raise NotImplementedError(channel_kind)
+
+
+def get_representation(settings: dict, kind: str) -> str:
+    if kind == 'id':
+        return settings['channel_id']
+    elif kind == 'url':
+        pieces = settings['channel_url'].split('/')
+        result = [piece for piece in pieces if piece.startswith('@')][0]
+        return result
+    else:
+        raise NotImplementedError(kind)
+
+
+def get_meta_from_url(url: str) -> Series:
+    logger = getLogger(name='get_meta_from_url')
+    logger.info(msg=url, )
+    try:
+        with HTMLSession() as session:
+            response = session.get(url=url, )
+            response.html.render(sleep=1)
+            soup = BeautifulSoup(response.html.html, 'html.parser')
+            DEBUG['soup'] = soup
+            result = Series(data=tags_to_dict(soup.find_all(name='meta', ), ))
+    except TimeoutError as timeout_error:
+        logger.warning(timeout_error)
+        result = Series()
+    return result
 
 
 def tags_to_dict(tags: ResultSet, ) -> dict:
@@ -38,41 +77,6 @@ def tags_to_dict(tags: ResultSet, ) -> dict:
         elif tag.get('itemprop'):
             result[tag['itemprop']] = tag['content']
     return result
-
-
-def get_data_from_generator(videos: Generator) -> DataFrame:
-    logger = getLogger(name='get_data_from_generator')
-    result = []
-    for video in videos:
-        url = 'https://youtu.be/{}'.format(video['videoId'])
-        logger.info(msg=url, )
-        try:
-            with HTMLSession() as session:
-                response = session.get(url=url, )
-                response.html.render(sleep=1)
-                soup = BeautifulSoup(response.html.html, 'html.parser')
-                DEBUG['soup'] = soup
-                result.append(Series(data=tags_to_dict(soup.find_all(name='meta', ), )))
-        except TimeoutError as timeout_error:
-            logger.warning(timeout_error)
-    result_df = DataFrame(data=result, )
-    DEBUG['result_df'] = result_df
-    result_df['published'] = to_datetime(arg=result_df['datePublished'], )
-    result_df['views'] = result_df['interactionCount'].astype(int)
-    result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else round(math.log10(x), 2))
-    result_df = result_df.sort_values(by='published', )
-    return result_df
-
-
-def get_representation(settings: dict, kind: str) -> str:
-    if kind == 'id':
-        return settings['channel_id']
-    elif kind == 'url':
-        pieces = settings['channel_url'].split('/')
-        result = [piece for piece in pieces if piece.startswith('@')][0]
-        return result
-    else:
-        raise NotImplementedError(kind)
 
 
 def today_as_string() -> str:
