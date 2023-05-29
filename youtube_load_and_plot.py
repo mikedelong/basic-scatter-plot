@@ -1,4 +1,5 @@
 import math
+from json import load
 from logging import INFO
 from logging import basicConfig
 from logging import getLogger
@@ -18,8 +19,10 @@ def main():
     basicConfig(level=INFO, datefmt='%Y-%m-%d %H:%M:%S',
                 format='%(asctime)s.%(msecs)03d - %(levelname)s - %(name)s - %(message)s', )
     logger = getLogger(name='main', )
+    with open(encoding='utf-8', file='youtube_load_and_plot.json', mode='r') as input_fp:
+        settings = load(fp=input_fp, )
 
-    videos_df = read_csv(filepath_or_buffer='./videos.csv', usecols=['published', 'views'])
+    videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=['published', 'views'])
     videos_df['log10_views'] = videos_df['views'].apply(math.log10)
     videos_df['published'] = to_datetime(arg=videos_df['published'], )
     videos_df = videos_df.sort_values(by='published', )
