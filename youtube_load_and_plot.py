@@ -11,7 +11,7 @@ from matplotlib.pyplot import ylabel
 from pandas import read_csv
 from pandas import to_datetime
 from seaborn import scatterplot
-
+from plotly.express import scatter as plotly_scatter
 
 def main():
     time_start = now()
@@ -37,7 +37,10 @@ def main():
         close()
     elif plotting_package == 'plotly':
         filename = OUTPUT_FOLDER + SCATTER_PLOTLY_FILENAME
-        raise NotImplementedError(plotting_package)
+        figure = plotly_scatter(data_frame=videos_df, x='published', y='log10_views',
+                                title= 'Title', labels={'published': 'Date Published', 'log10_views': 'log10 of views'})
+        logger.info(msg='saving plot to {}'.format(filename), )
+        figure.write_html(filename)
     elif plotting_package == 'seaborn':
         filename = OUTPUT_FOLDER + SCATTERPLOT_FILENAME
         scatterplot(data=videos_df, x='published', y='log10_views', )
