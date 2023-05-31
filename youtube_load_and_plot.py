@@ -29,8 +29,10 @@ def make_plot(plotting_package: str, df: DataFrame, ):
         close()
     elif plotting_package == 'plotly':
         filename = OUTPUT_FOLDER + SCATTER_PLOTLY_FILENAME
-        figure = plotly_scatter(data_frame=df, x='published', y='log10_views',
-                                title='Title', labels={'published': 'Date Published', 'log10_views': 'log10 of views'})
+        labels = {'published': 'Date Published', 'log10_views': 'log10 of views'}
+        hover_data = ['published', 'views']
+        figure = plotly_scatter(data_frame=df, hover_data=hover_data, labels=labels, title='Title', x='published',
+                                y='log10_views', )
         logger.info(msg='saving plot to {}'.format(filename), )
         figure.write_html(filename)
     elif plotting_package == 'seaborn':
@@ -56,7 +58,7 @@ def main():
     videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
     videos_df['published'] = to_datetime(arg=videos_df['published'], )
     videos_df = videos_df.sort_values(by='published', )
-    make_plot(df=videos_df, plotting_package= settings['plotting_package'], )
+    make_plot(df=videos_df, plotting_package=settings['plotting_package'], )
 
     time_seconds = (now() - time_start).total_seconds()
     logger.info(msg='done: {:02d}:{:05.2f}'.format(int(time_seconds // 60), time_seconds % 60, ))
@@ -66,7 +68,7 @@ OUTPUT_FOLDER = './result/'
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
 SCATTER_PLOTLY_FILENAME = 'youtube.plotly.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
-USECOLS = ['published', 'log10_views']
+USECOLS = ['log10_views', 'published', 'views', ]
 
 if __name__ == '__main__':
     main()
