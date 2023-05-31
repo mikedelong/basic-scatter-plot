@@ -29,11 +29,14 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
                 format='png', metadata=None, pad_inches=0.1, )
         close()
     elif plotting_package == 'plotly':
-        filename = OUTPUT_FOLDER + SCATTER_PLOTLY_FILENAME
+        custom_data = ['name', 'published', 'views']
         labels = {'published': 'Date Published', 'log10_views': 'log10 of views'}
-        hover_data = ['name', 'published', 'views']
-        figure = plotly_scatter(data_frame=df, hover_data=hover_data, labels=labels, title=page_title, x='published',
+        figure = plotly_scatter(custom_data=custom_data, data_frame=df, labels=labels, title=page_title, x='published',
                                 y='log10_views', )
+        hover_template = '<br>'.join(
+            ['video: %{customdata[0]}', 'date:%{customdata[1]}', 'views:%{customdata[2]}'])
+        figure.update_traces(hovertemplate=hover_template, )
+        filename = OUTPUT_FOLDER + SCATTER_PLOTLY_FILENAME
         logger.info(msg='saving plot to {}'.format(filename), )
         figure.write_html(filename)
     elif plotting_package == 'seaborn':
