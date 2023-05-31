@@ -10,7 +10,6 @@ from matplotlib.pyplot import scatter
 from matplotlib.pyplot import ylabel
 from pandas import DataFrame
 from pandas import read_csv
-from pandas import to_datetime
 from plotly.express import scatter as plotly_scatter
 from seaborn import scatterplot
 
@@ -56,7 +55,6 @@ def main():
         settings = load(fp=input_fp, )
 
     videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
-    videos_df['published'] = to_datetime(arg=videos_df['published'], )
     videos_df = videos_df.sort_values(by='published', )
     make_plot(df=videos_df, plotting_package=settings['plotting_package'], )
 
