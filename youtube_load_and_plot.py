@@ -56,8 +56,7 @@ def main():
     videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
     videos_df['published'] = to_datetime(arg=videos_df['published'], )
     videos_df = videos_df.sort_values(by='published', )
-    plotting_package = settings['plotting_package']
-    make_plot(df=videos_df, plotting_package=plotting_package, )
+    make_plot(df=videos_df, plotting_package= settings['plotting_package'], )
 
     time_seconds = (now() - time_start).total_seconds()
     logger.info(msg='done: {:02d}:{:05.2f}'.format(int(time_seconds // 60), time_seconds % 60, ))
