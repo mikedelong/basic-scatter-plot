@@ -29,7 +29,7 @@ def make_plot(plotting_package: str, df: DataFrame, ):
     elif plotting_package == 'plotly':
         filename = OUTPUT_FOLDER + SCATTER_PLOTLY_FILENAME
         labels = {'published': 'Date Published', 'log10_views': 'log10 of views'}
-        hover_data = ['published', 'views']
+        hover_data = ['name', 'published', 'views']
         figure = plotly_scatter(data_frame=df, hover_data=hover_data, labels=labels, title='Title', x='published',
                                 y='log10_views', )
         logger.info(msg='saving plot to {}'.format(filename), )
@@ -65,7 +65,7 @@ OUTPUT_FOLDER = './result/'
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
 SCATTER_PLOTLY_FILENAME = 'youtube.plotly.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
-USECOLS = ['log10_views', 'published', 'views', ]
+USECOLS = ['log10_views', 'name', 'published', 'views', ]
 
 if __name__ == '__main__':
     main()
