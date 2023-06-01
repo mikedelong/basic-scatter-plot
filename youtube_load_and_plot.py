@@ -1,3 +1,4 @@
+from json import dumps
 from json import load
 from logging import INFO
 from logging import basicConfig
@@ -13,6 +14,12 @@ from pandas import DataFrame
 from pandas import read_csv
 from plotly.express import scatter as plotly_scatter
 from seaborn import scatterplot
+
+
+def load_settings(filename: str, ) -> dict:
+    with open(encoding='utf-8', file=filename, mode='r') as input_fp:
+        result = dict(load(fp=input_fp, ))
+    return {key: value for key, value in result.items() if key in result['keys']}
 
 
 def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
@@ -58,8 +65,8 @@ def main():
     basicConfig(level=INFO, datefmt='%Y-%m-%d %H:%M:%S',
                 format='%(asctime)s.%(msecs)03d - %(levelname)s - %(name)s - %(message)s', )
     logger = getLogger(name='main', )
-    with open(encoding='utf-8', file='youtube_load_and_plot.json', mode='r') as input_fp:
-        settings = load(fp=input_fp, )
+    settings = load_settings(filename='youtube_load_and_plot.json')
+    logger.info(msg='settings: {}'.format(dumps(obj=settings, indent=4, sort_keys=True, ), ), )
 
     input_filename = settings['input_data_file']
     videos_df = read_csv(filepath_or_buffer=input_filename, usecols=USECOLS, )
