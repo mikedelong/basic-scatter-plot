@@ -3,6 +3,7 @@ from json import load
 from logging import INFO
 from logging import basicConfig
 from logging import getLogger
+from math import log10
 
 from arrow import now
 from matplotlib.pyplot import close
@@ -14,6 +15,11 @@ from pandas import DataFrame
 from pandas import read_csv
 from plotly.express import scatter as plotly_scatter
 from seaborn import scatterplot
+
+
+def duration_seconds(duration: str, ) -> int:
+    pieces = duration.replace('PT', '').replace('S', '').split('M')
+    return 60 * int(pieces[0]) + int(pieces[1])
 
 
 def load_settings(filename: str, ) -> dict:
@@ -39,7 +45,7 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
     elif plotting_package == 'plotly':
         custom_data = ['name', 'published', 'views_with_commas']
         labels = {'published': 'Date Published', 'log10_views': 'log10 of views'}
-        figure = plotly_scatter(color='log10_views', custom_data=custom_data, data_frame=df, labels=labels,
+        figure = plotly_scatter(color='log10_duration_seconds', custom_data=custom_data, data_frame=df, labels=labels,
                                 title=page_title, x='published', y='log10_views', )
         hover_template = '<br>'.join(
             ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
@@ -69,7 +75,9 @@ def main():
     logger.info(msg='settings: {}'.format(dumps(obj=settings, indent=4, sort_keys=True, ), ), )
 
     videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
-    videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x),)
+    videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
+    videos_df['duration_seconds'] = videos_df['duration'].apply(duration_seconds)
+    videos_df['log10_duration_seconds'] = videos_df['duration_seconds'].apply(func=lambda x: 1 + log10(x))
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
     make_plot(df=videos_df.sort_values(by='published', ), plotting_package=settings['plotting_package'],
               page_title=settings['page_title'], )
@@ -82,7 +90,7 @@ OUTPUT_FOLDER = './result/'
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
 SCATTER_PLOTLY_FILENAME = 'youtube.plotly.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
-USECOLS = ['log10_views', 'name', 'published', 'views', ]
+USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', ]
 
 if __name__ == '__main__':
     main()
