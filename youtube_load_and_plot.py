@@ -37,10 +37,10 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
                 format='png', metadata=None, pad_inches=0.1, )
         close()
     elif plotting_package == 'plotly':
-        custom_data = ['name', 'published', 'views']
+        custom_data = ['name', 'published', 'views_with_commas']
         labels = {'published': 'Date Published', 'log10_views': 'log10 of views'}
-        figure = plotly_scatter(custom_data=custom_data, data_frame=df, labels=labels, title=page_title, x='published',
-                                y='log10_views', )
+        figure = plotly_scatter(color='log10_views', custom_data=custom_data, data_frame=df, labels=labels,
+                                title=page_title, x='published', y='log10_views', )
         hover_template = '<br>'.join(
             ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
         figure.update_traces(hovertemplate=hover_template, )
@@ -69,6 +69,7 @@ def main():
     logger.info(msg='settings: {}'.format(dumps(obj=settings, indent=4, sort_keys=True, ), ), )
 
     videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
+    videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x),)
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
     make_plot(df=videos_df.sort_values(by='published', ), plotting_package=settings['plotting_package'],
               page_title=settings['page_title'], )
