@@ -17,6 +17,7 @@ from seaborn import scatterplot
 
 def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
     logger = getLogger(name='make_plot', )
+    logger.info(msg='plotting package: {}'.format(plotting_package, ), )
     if plotting_package not in {'matplotlib.pyplot', 'plotly', 'seaborn'}:
         raise NotImplementedError(plotting_package)
     elif plotting_package == 'matplotlib.pyplot':
@@ -34,7 +35,7 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
         figure = plotly_scatter(custom_data=custom_data, data_frame=df, labels=labels, title=page_title, x='published',
                                 y='log10_views', )
         hover_template = '<br>'.join(
-            ['video: %{customdata[0]}', 'date:%{customdata[1]}', 'views:%{customdata[2]}'])
+            ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
         figure.update_traces(hovertemplate=hover_template, )
         filename = OUTPUT_FOLDER + SCATTER_PLOTLY_FILENAME
         logger.info(msg='saving plot to {}'.format(filename), )
@@ -60,7 +61,9 @@ def main():
     with open(encoding='utf-8', file='youtube_load_and_plot.json', mode='r') as input_fp:
         settings = load(fp=input_fp, )
 
-    videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
+    input_filename = settings['input_data_file']
+    videos_df = read_csv(filepath_or_buffer=input_filename, usecols=USECOLS, )
+    logger.info(msg='data from {} has shape: {}'.format(input_filename, videos_df.shape))
     make_plot(df=videos_df.sort_values(by='published', ), plotting_package=settings['plotting_package'],
               page_title=settings['page_title'], )
 
