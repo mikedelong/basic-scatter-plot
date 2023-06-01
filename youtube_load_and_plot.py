@@ -68,9 +68,8 @@ def main():
     settings = load_settings(filename='youtube_load_and_plot.json')
     logger.info(msg='settings: {}'.format(dumps(obj=settings, indent=4, sort_keys=True, ), ), )
 
-    input_filename = settings['input_data_file']
-    videos_df = read_csv(filepath_or_buffer=input_filename, usecols=USECOLS, )
-    logger.info(msg='data from {} has shape: {}'.format(input_filename, videos_df.shape))
+    videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
+    logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
     make_plot(df=videos_df.sort_values(by='published', ), plotting_package=settings['plotting_package'],
               page_title=settings['page_title'], )
 
