@@ -52,6 +52,13 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
                 'y': 'log10_views',
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME,
             },
+            {
+                'color': 'published',
+                'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'x': 'log10_duration_seconds',
+                'y': 'log10_views',
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME,
+            },
         ]:
             figure = plotly_scatter(color=item['color'], custom_data=custom_data, data_frame=df, labels=item['labels'],
                                     title=page_title, x=item['x'], y=item['y'], )
@@ -97,6 +104,7 @@ def main():
 OUTPUT_FOLDER = './result/'
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
 SCATTER_PLOTLY_DATE_VIEWS_FILENAME = 'youtube.plotly.date-views.scatter.html'
+SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.duration-views.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
 USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', ]
 
