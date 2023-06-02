@@ -44,15 +44,23 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
         close()
     elif plotting_package == 'plotly':
         custom_data = ['name', 'published', 'views_with_commas']
-        labels = {'published': 'Date Published', 'log10_views': 'log10 of views'}
-        figure = plotly_scatter(color='log10_duration_seconds', custom_data=custom_data, data_frame=df, labels=labels,
-                                title=page_title, x='published', y='log10_views', )
-        hover_template = '<br>'.join(
-            ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
-        figure.update_traces(hovertemplate=hover_template, )
-        filename = OUTPUT_FOLDER + SCATTER_PLOTLY_FILENAME
-        logger.info(msg='saving plot to {}'.format(filename), )
-        figure.write_html(filename)
+        for item in [
+            {
+                'color': 'log10_duration_seconds',
+                'labels': {'published': 'Date Published', 'log10_views': 'log10 of views'},
+                'x': 'published',
+                'y': 'log10_views',
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME,
+            },
+        ]:
+            figure = plotly_scatter(color=item['color'], custom_data=custom_data, data_frame=df, labels=item['labels'],
+                                    title=page_title, x=item['x'], y=item['y'], )
+            hover_template = '<br>'.join(
+                ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
+            figure.update_traces(hovertemplate=hover_template, )
+            filename = item['filename']
+            logger.info(msg='saving plot to {}'.format(filename), )
+            figure.write_html(filename)
     elif plotting_package == 'seaborn':
         filename = OUTPUT_FOLDER + SCATTERPLOT_FILENAME
         scatterplot(data=df, x='published', y='log10_views', )
@@ -88,7 +96,7 @@ def main():
 
 OUTPUT_FOLDER = './result/'
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
-SCATTER_PLOTLY_FILENAME = 'youtube.plotly.scatter.html'
+SCATTER_PLOTLY_DATE_VIEWS_FILENAME = 'youtube.plotly.date-views.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
 USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', ]
 
