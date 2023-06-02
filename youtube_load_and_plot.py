@@ -47,21 +47,24 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
         for item in [
             {
                 'color': 'log10_duration_seconds',
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME,
                 'labels': {'published': 'Date Published', 'log10_views': 'log10 of views'},
+                'showlegend': True,
                 'x': 'published',
                 'y': 'log10_views',
-                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME,
             },
             {
-                'color': 'published',
+                'color': 'year_published',
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME,
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'showlegend': True,
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
-                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME,
             },
         ]:
             figure = plotly_scatter(color=item['color'], custom_data=custom_data, data_frame=df, labels=item['labels'],
                                     title=page_title, x=item['x'], y=item['y'], )
+            figure.layout.showlegend = item['showlegend']
             hover_template = '<br>'.join(
                 ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
             figure.update_traces(hovertemplate=hover_template, )
@@ -90,9 +93,10 @@ def main():
     logger.info(msg='settings: {}'.format(dumps(obj=settings, indent=4, sort_keys=True, ), ), )
 
     videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
-    videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
     videos_df['duration_seconds'] = videos_df['duration'].apply(duration_seconds)
-    videos_df['log10_duration_seconds'] = videos_df['duration_seconds'].apply(func=lambda x: 1 + log10(x))
+    videos_df['log10_duration_seconds'] = videos_df['duration_seconds'].apply(func=lambda x: log10(1 + x))
+    videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
+    videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
     make_plot(df=videos_df.sort_values(by='published', ), plotting_package=settings['plotting_package'],
               page_title=settings['page_title'], )
