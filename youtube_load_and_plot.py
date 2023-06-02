@@ -15,6 +15,7 @@ from pandas import DataFrame
 from pandas import read_csv
 from plotly.express import scatter as plotly_scatter
 from seaborn import scatterplot
+from pandas import to_datetime
 
 
 def duration_seconds(duration: str, ) -> int:
@@ -54,7 +55,7 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
                 'y': 'log10_views',
             },
             {
-                'color': 'year_published',
+                'color': 'age (days)',
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME,
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'showlegend': True,
@@ -93,6 +94,7 @@ def main():
     logger.info(msg='settings: {}'.format(dumps(obj=settings, indent=4, sort_keys=True, ), ), )
 
     videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
+    videos_df['age (days)'] = videos_df['published'].apply(func=lambda x: (time_start.date() - to_datetime(x).date()).days)
     videos_df['duration_seconds'] = videos_df['duration'].apply(duration_seconds)
     videos_df['log10_duration_seconds'] = videos_df['duration_seconds'].apply(func=lambda x: log10(1 + x))
     videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
