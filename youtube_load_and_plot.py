@@ -37,8 +37,8 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
     elif plotting_package == 'matplotlib.pyplot':
         filename = OUTPUT_FOLDER + SCATTER_FILENAME
         scatter(data=df, x='published', y='log10_views', )
-        ylabel(ylabel='log10 views')
         title(label=page_title, )
+        ylabel(ylabel='log10 views')
         logger.info(msg='saving plot to {}'.format(filename), )
         savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
                 format='png', metadata=None, pad_inches=0.1, )
@@ -49,8 +49,7 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
             {
                 'color': 'log10_duration_seconds',
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME,
-                'labels': {'published': 'Date Published', 'log10_views': 'log10 of views'},
-                'showlegend': True,
+                'labels': {'log10_views': 'log10 of views', 'published': 'Date Published', },
                 'x': 'published',
                 'y': 'log10_views',
             },
@@ -58,14 +57,12 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
                 'color': 'age (days)',
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME,
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
-                'showlegend': True,
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
             },
         ]:
             figure = plotly_scatter(color=item['color'], custom_data=custom_data, data_frame=df, labels=item['labels'],
                                     title=page_title, x=item['x'], y=item['y'], )
-            figure.layout.showlegend = item['showlegend']
             hover_template = '<br>'.join(
                 ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
             figure.update_traces(hovertemplate=hover_template, )
@@ -75,8 +72,8 @@ def make_plot(plotting_package: str, df: DataFrame, page_title: str, ):
     elif plotting_package == 'seaborn':
         filename = OUTPUT_FOLDER + SCATTERPLOT_FILENAME
         scatterplot(data=df, x='published', y='log10_views', )
-        ylabel(ylabel='log10 views')
         title(label=page_title, )
+        ylabel(ylabel='log10 views')
         logger.info(msg='saving plot to {}'.format(filename), )
         savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
                 format='png', metadata=None, pad_inches=0.1, )
@@ -90,19 +87,19 @@ def main():
     basicConfig(level=INFO, datefmt='%Y-%m-%d %H:%M:%S',
                 format='%(asctime)s.%(msecs)03d - %(levelname)s - %(name)s - %(message)s', )
     logger = getLogger(name='main', )
-    settings = load_settings(filename='youtube_load_and_plot.json')
-    logger.info(msg='settings: {}'.format(dumps(obj=settings, indent=4, sort_keys=True, ), ), )
+    settings = load_settings(filename='youtube_load_and_plot.json', )
+    logger.info(msg='settings: {}'.format(dumps(indent=4, obj=settings, sort_keys=True, ), ), )
 
     videos_df = read_csv(filepath_or_buffer=settings['input_data_file'], usecols=USECOLS, )
     videos_df['age (days)'] = videos_df['published'].apply(
         func=lambda x: (time_start.date() - to_datetime(x).date()).days)
-    videos_df['duration_seconds'] = videos_df['duration'].apply(duration_seconds)
-    videos_df['log10_duration_seconds'] = videos_df['duration_seconds'].apply(func=lambda x: log10(1 + x))
+    videos_df['duration_seconds'] = videos_df['duration'].apply(func=duration_seconds, )
+    videos_df['log10_duration_seconds'] = videos_df['duration_seconds'].apply(func=lambda x: log10(1 + x), )
     videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
-    make_plot(df=videos_df.sort_values(by='published', ), plotting_package=settings['plotting_package'],
-              page_title=settings['page_title'], )
+    make_plot(df=videos_df.sort_values(by='published', ), page_title=settings['page_title'],
+              plotting_package=settings['plotting_package'], )
 
     time_seconds = (now() - time_start).total_seconds()
     logger.info(msg='done: {:02d}:{:05.2f}'.format(int(time_seconds // 60), time_seconds % 60, ))
