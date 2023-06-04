@@ -8,24 +8,21 @@ from typing import Generator
 from arrow import now
 from bs4 import BeautifulSoup
 from bs4.element import ResultSet
-from matplotlib.pyplot import close
-from matplotlib.pyplot import savefig
 from pandas import DataFrame
 from pandas import Series
 from pandas import to_datetime
 from pyppeteer.errors import TimeoutError
 from requests_html import HTMLSession
 from scrapetube import get_channel
-from seaborn import scatterplot
 
 
 def get_data_from_generator(videos: Generator) -> DataFrame:
     result = [get_meta_from_url(url='https://youtu.be/{}'.format(video['videoId'])) for video in videos]
     result_df = DataFrame(data=result, )
     DEBUG['result_df'] = result_df
-    result_df['published'] = to_datetime(arg=result_df['datePublished'], )
     result_df['views'] = result_df['interactionCount'].astype(int)
     result_df['log10_views'] = result_df['views'].apply(lambda x: 0 if x == 0 else round(log10(x), 2))
+    result_df['published'] = to_datetime(arg=result_df['datePublished'], )
     result_df = result_df.sort_values(by='published', )
     return result_df
 
@@ -56,7 +53,7 @@ def get_meta_from_url(url: str) -> Series:
     try:
         with HTMLSession() as session:
             response = session.get(url=url, )
-            response.html.render(sleep=1)
+            response.html.render(sleep=1,)
             soup = BeautifulSoup(response.html.html, 'html.parser')
             DEBUG['soup'] = soup
             result = Series(data=tags_to_dict(soup.find_all(name='meta', ), ))
@@ -97,13 +94,6 @@ def main():
     videos_df = get_data_from_generator(videos=videos_generator, )
     filename = DATA_FOLDER + '-'.join([today_as_string(), channel_kind, representation, DATA_FILENAME])
     videos_df.to_csv(index=False, path_or_buf=filename, )
-
-    scatterplot(data=videos_df, x='published', y='views', )
-    filename = OUTPUT_FOLDER + '-'.join([today_as_string(), channel_kind, representation, PLOT_FILENAME])
-    logger.info(msg='saving plot to {}'.format(filename))
-    savefig(backend=None, bbox_inches=None, dpi='figure', edgecolor='auto', facecolor='auto', fname=filename,
-            format='png', metadata=None, pad_inches=0.1, )
-    close()
 
     time_seconds = (now() - time_start).total_seconds()
     logger.info(msg='done: {:02d}:{:05.2f}'.format(int(time_seconds // 60), time_seconds % 60))
