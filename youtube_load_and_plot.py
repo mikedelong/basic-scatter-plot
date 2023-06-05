@@ -16,7 +16,24 @@ from pandas import read_csv
 from pandas import to_datetime
 from plotly.express import scatter as plotly_scatter
 from seaborn import scatterplot
+from sklearn.cluster import KMeans
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
+
+
+def add_kmeans_cluster(df: DataFrame) -> DataFrame:
+    logger = getLogger(name='add_kmeans_cluster', )
+    logger.info(df.head(5)['keywords'])
+    vectorizer = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8',
+                                 input='content', lowercase=True, max_df=1.0, max_features=None, min_df=1,
+                                 ngram_range=(1, 3), preprocessor=None, stop_words=None, strip_accents=None,
+                                 tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
+    features = vectorizer.fit_transform(raw_documents=df['keywords'], )
+    model = KMeans(algorithm='lloyd', copy_x=True, init='k-means++', max_iter=300, n_clusters=12, n_init='warn',
+                   random_state=1, tol=0.0001, verbose=1, )
+    model.fit(X=features, )
+    df['kmeans_cluster'] = model.labels_
+    return df
 
 
 def duration_seconds(duration: str, ) -> int:
@@ -71,6 +88,14 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'x': 'tsne_x',
                 'y': 'tsne_y',
             },
+            {
+                'color': 'kmeans_cluster',
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_KMEANS_FILENAME.format(short_name),
+                'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'page_title': 'YouTube user {} duration/count K-means scatter'.format(short_name),
+                'x': 'log10_duration_seconds',
+                'y': 'log10_views',
+            },
         ]:
             figure = plotly_scatter(color=item['color'], custom_data=custom_data, data_frame=df, labels=item['labels'],
                                     title=item['page_title'], x=item['x'], y=item['y'], )
@@ -120,6 +145,7 @@ def main():
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
     tsne_columns = ['age (days)', 'duration_seconds', 'views', ]
     videos_df = add_tsne_components(columns=tsne_columns, df=videos_df, )
+    videos_df = add_kmeans_cluster(df=videos_df, )
 
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
 
@@ -134,9 +160,10 @@ OUTPUT_FOLDER = './result/'
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
 SCATTER_PLOTLY_DATE_VIEWS_FILENAME = 'youtube.plotly.{}.date-views.scatter.html'
 SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.{}.duration-views.scatter.html'
+SCATTER_PLOTLY_KMEANS_FILENAME = 'youtube.plotly.{}.kmeans.scatter.html'
 SCATTER_PLOTLY_TSNE_FILENAME = 'youtube.plotly.{}.tsne.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
-USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', ]
+USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', 'keywords', ]
 
 if __name__ == '__main__':
     main()
