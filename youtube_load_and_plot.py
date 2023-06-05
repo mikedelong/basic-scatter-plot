@@ -16,6 +16,7 @@ from pandas import read_csv
 from pandas import to_datetime
 from plotly.express import scatter as plotly_scatter
 from seaborn import scatterplot
+from sklearn.manifold import TSNE
 
 
 def duration_seconds(duration: str, ) -> int:
@@ -62,6 +63,14 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
             },
+            {
+                'color': 'age (days)',
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_TSNE_FILENAME.format(short_name),
+                'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'page_title': 'YouTube user {} duration/count TSNE scatter'.format(short_name),
+                'x': 'tsne_x',
+                'y': 'tsne_y',
+            },
         ]:
             figure = plotly_scatter(color=item['color'], custom_data=custom_data, data_frame=df, labels=item['labels'],
                                     title=item['page_title'], x=item['x'], y=item['y'], )
@@ -84,6 +93,16 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
         raise NotImplementedError(plotting_package)
 
 
+def add_tsne_components(df: DataFrame, columns: list, ) -> DataFrame:
+    model = TSNE(angle=0.5, early_exaggeration=12.0, init='pca', learning_rate='auto', method='barnes_hut',
+                 metric='euclidean', metric_params=None, min_grad_norm=1e-7, n_components=2, n_iter=500,
+                 n_iter_without_progress=100, n_jobs=None, perplexity=30.0, random_state=0, verbose=2, )
+    tsne_result = model.fit_transform(X=df[columns], )
+    df['tsne_x'] = tsne_result[:, 0]
+    df['tsne_y'] = tsne_result[:, 1]
+    return df
+
+
 def main():
     time_start = now()
     basicConfig(level=INFO, datefmt='%Y-%m-%d %H:%M:%S',
@@ -99,6 +118,9 @@ def main():
     videos_df['log10_duration_seconds'] = videos_df['duration_seconds'].apply(func=lambda x: log10(1 + x), )
     videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
+    tsne_columns = ['age (days)', 'duration_seconds', 'views', ]
+    videos_df = add_tsne_components(columns=tsne_columns, df=videos_df, )
+
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
 
     make_plot(df=videos_df.sort_values(by='published', ),
@@ -112,6 +134,7 @@ OUTPUT_FOLDER = './result/'
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
 SCATTER_PLOTLY_DATE_VIEWS_FILENAME = 'youtube.plotly.{}.date-views.scatter.html'
 SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.{}.duration-views.scatter.html'
+SCATTER_PLOTLY_TSNE_FILENAME = 'youtube.plotly.{}.tsne.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
 USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', ]
 
