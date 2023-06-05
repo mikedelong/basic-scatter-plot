@@ -101,9 +101,8 @@ def main():
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
 
-    short_name = [piece for piece in settings['input_data_file'].split('-') if piece.startswith('@')][0]
-
-    make_plot(df=videos_df.sort_values(by='published', ), short_name=short_name,
+    make_plot(df=videos_df.sort_values(by='published', ),
+              short_name=[piece for piece in settings['input_data_file'].split('-') if piece.startswith('@')][0],
               plotting_package=settings['plotting_package'], )
     time_seconds = (now() - time_start).total_seconds()
     logger.info(msg='done: {:02d}:{:05.2f}'.format(int(time_seconds // 60), time_seconds % 60, ))
