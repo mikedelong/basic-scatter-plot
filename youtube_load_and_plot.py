@@ -48,7 +48,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
         for item in [
             {
                 'color': 'log10_duration_seconds',
-                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME,
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_views': 'log10 of views', 'published': 'Date Published', },
                 'page_title': 'YouTube user {} date/count scatter'.format(short_name),
                 'x': 'published',
@@ -56,7 +56,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
             },
             {
                 'color': 'age (days)',
-                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME,
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count scatter'.format(short_name),
                 'x': 'log10_duration_seconds',
@@ -110,8 +110,8 @@ def main():
 
 OUTPUT_FOLDER = './result/'
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
-SCATTER_PLOTLY_DATE_VIEWS_FILENAME = 'youtube.plotly.date-views.scatter.html'
-SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.duration-views.scatter.html'
+SCATTER_PLOTLY_DATE_VIEWS_FILENAME = 'youtube.plotly.{}.date-views.scatter.html'
+SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.{}.duration-views.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
 USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', ]
 
