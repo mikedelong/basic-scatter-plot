@@ -23,12 +23,6 @@ def duration_seconds(duration: str, ) -> int:
     return 60 * int(pieces[0]) + int(pieces[1])
 
 
-def get_short_name(long_name: str) -> str:
-    pieces = long_name.split('-')
-    result = [piece for piece in pieces if piece.startswith('@')]
-    return result[0]
-
-
 def load_settings(filename: str, ) -> dict:
     with open(encoding='utf-8', file=filename, mode='r') as input_fp:
         result = dict(load(fp=input_fp, ))
@@ -107,7 +101,7 @@ def main():
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
 
-    short_name = get_short_name(long_name=settings['input_data_file'])
+    short_name = [piece for piece in settings['input_data_file'].split('-') if piece.startswith('@')][0]
 
     make_plot(df=videos_df.sort_values(by='published', ), short_name=short_name,
               plotting_package=settings['plotting_package'], )
