@@ -23,16 +23,25 @@ from sklearn.manifold import TSNE
 
 def add_kmeans_cluster(df: DataFrame) -> DataFrame:
     logger = getLogger(name='add_kmeans_cluster', )
-    logger.info(df.head(5)['keywords'])
     vectorizer = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8',
                                  input='content', lowercase=True, max_df=1.0, max_features=None, min_df=1,
                                  ngram_range=(1, 3), preprocessor=None, stop_words=None, strip_accents=None,
                                  tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
-    features = vectorizer.fit_transform(raw_documents=df['keywords'], )
-    model = KMeans(algorithm='lloyd', copy_x=True, init='k-means++', max_iter=300, n_clusters=12, n_init='warn',
-                   random_state=1, tol=0.0001, verbose=1, )
-    model.fit(X=features, )
+    model = KMeans(algorithm='lloyd', copy_x=True, init='k-means++', max_iter=300, n_clusters=12, n_init='auto',
+                   random_state=RANDOM_STATE, tol=0.0001, verbose=1, )
+    model.fit(X=vectorizer.fit_transform(raw_documents=df['keywords'], ), )
     df['kmeans_cluster'] = model.labels_
+    logger.info(df['kmeans_cluster'].value_counts().to_dict())
+    return df
+
+
+def add_tsne_components(df: DataFrame, columns: list, ) -> DataFrame:
+    model = TSNE(angle=0.5, early_exaggeration=12.0, init='pca', learning_rate='auto', method='barnes_hut',
+                 metric='euclidean', metric_params=None, min_grad_norm=1e-7, n_components=2, n_iter=500,
+                 n_iter_without_progress=100, n_jobs=None, perplexity=30.0, random_state=RANDOM_STATE, verbose=2, )
+    tsne_result = model.fit_transform(X=df[columns], )
+    df['tsne_x'] = tsne_result[:, 0]
+    df['tsne_y'] = tsne_result[:, 1]
     return df
 
 
@@ -118,16 +127,6 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
         raise NotImplementedError(plotting_package)
 
 
-def add_tsne_components(df: DataFrame, columns: list, ) -> DataFrame:
-    model = TSNE(angle=0.5, early_exaggeration=12.0, init='pca', learning_rate='auto', method='barnes_hut',
-                 metric='euclidean', metric_params=None, min_grad_norm=1e-7, n_components=2, n_iter=500,
-                 n_iter_without_progress=100, n_jobs=None, perplexity=30.0, random_state=0, verbose=2, )
-    tsne_result = model.fit_transform(X=df[columns], )
-    df['tsne_x'] = tsne_result[:, 0]
-    df['tsne_y'] = tsne_result[:, 1]
-    return df
-
-
 def main():
     time_start = now()
     basicConfig(level=INFO, datefmt='%Y-%m-%d %H:%M:%S',
@@ -157,6 +156,7 @@ def main():
 
 
 OUTPUT_FOLDER = './result/'
+RANDOM_STATE = 1
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
 SCATTER_PLOTLY_DATE_VIEWS_FILENAME = 'youtube.plotly.{}.date-views.scatter.html'
 SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.{}.duration-views.scatter.html'
