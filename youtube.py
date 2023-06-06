@@ -27,24 +27,14 @@ def get_data_from_generator(videos: Generator) -> DataFrame:
     return result_df
 
 
-def get_generator(channel: str, channel_kind: str, ) -> Generator:
-    if channel_kind == 'id':
-        return get_channel(channel_id=channel, )
-    elif channel_kind == 'url':
-        return get_channel(channel_url=channel)
-    else:
-        raise NotImplementedError(channel_kind)
+def get_generator(channel: str, ) -> Generator:
+    return get_channel(channel_url=channel)
 
 
-def get_representation(settings: dict, kind: str) -> str:
-    if kind == 'id':
-        return settings['channel_id']
-    elif kind == 'url':
-        pieces = settings['channel_url'].split('/')
-        result = [piece for piece in pieces if piece.startswith('@')][0]
-        return result
-    else:
-        raise NotImplementedError(kind)
+def get_representation(settings: dict, ) -> str:
+    pieces = settings['channel_url'].split('/')
+    result = [piece for piece in pieces if piece.startswith('@')][0]
+    return result
 
 
 def get_meta_from_url(url: str) -> Series:
@@ -53,7 +43,7 @@ def get_meta_from_url(url: str) -> Series:
     try:
         with HTMLSession() as session:
             response = session.get(url=url, )
-            response.html.render(sleep=1,)
+            response.html.render(sleep=1, )
             soup = BeautifulSoup(response.html.html, 'html.parser')
             DEBUG['soup'] = soup
             result = Series(data=tags_to_dict(soup.find_all(name='meta', ), ))
@@ -85,14 +75,13 @@ def main():
     basicConfig(level=INFO, datefmt='%Y-%m-%d %H:%M:%S',
                 format='%(asctime)s.%(msecs)03d - %(levelname)s - %(name)s - %(message)s', )
     logger = getLogger(name='main', )
-    with open(file='youtube.json', mode='r', ) as input_fp:
+    with open(file='./youtube.json', mode='r', ) as input_fp:
         settings = load(fp=input_fp, )
 
-    channel_kind = 'url'
-    videos_generator = get_generator(channel=settings['channel_url'], channel_kind=channel_kind, )
-    representation = get_representation(settings, channel_kind)
+    videos_generator = get_generator(channel=settings['channel_url'], )
+    representation = get_representation(settings, )
     videos_df = get_data_from_generator(videos=videos_generator, )
-    filename = DATA_FOLDER + '-'.join([today_as_string(), channel_kind, representation, DATA_FILENAME])
+    filename = DATA_FOLDER + '-'.join([today_as_string(), representation, DATA_FILENAME])
     videos_df.to_csv(index=False, path_or_buf=filename, )
 
     time_seconds = (now() - time_start).total_seconds()
@@ -102,8 +91,8 @@ def main():
 DATA_FILENAME = 'youtube-data.csv'
 DATA_FOLDER = './data/'
 DEBUG = {}
-PLOT_FILENAME = 'youtube-scatterplot.png'
 OUTPUT_FOLDER = './result/'
+PLOT_FILENAME = 'youtube-scatterplot.png'
 
 if __name__ == '__main__':
     main()
