@@ -15,6 +15,7 @@ from pandas import DataFrame
 from pandas import read_csv
 from pandas import to_datetime
 from plotly.express import scatter as plotly_scatter
+from plotly.express.colors import sequential
 from seaborn import scatterplot
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -75,6 +76,8 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
         for item in [
             {
                 'color': 'log10_duration_seconds',
+                'color_continuous_scale': sequential.Viridis,
+                'color_discrete' : False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_views': 'log10 of views', 'published': 'Date Published', },
                 'page_title': 'YouTube user {} date/count scatter'.format(short_name),
@@ -83,6 +86,8 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
             },
             {
                 'color': 'age (days)',
+                'color_continuous_scale': sequential.Viridis,
+                'color_discrete' : False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count scatter'.format(short_name),
@@ -91,6 +96,8 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
             },
             {
                 'color': 'age (days)',
+                'color_continuous_scale': sequential.Viridis,
+                'color_discrete' : False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_TSNE_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count TSNE scatter'.format(short_name),
@@ -99,6 +106,8 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
             },
             {
                 'color': 'kmeans_cluster',
+                'color_continuous_scale': sequential.Viridis,
+                'color_discrete' : True,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_KMEANS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count K-means scatter'.format(short_name),
@@ -106,7 +115,10 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'y': 'log10_views',
             },
         ]:
-            figure = plotly_scatter(color=item['color'], custom_data=custom_data, data_frame=df, labels=item['labels'],
+            if item['color_discrete']:
+                df[item['color']] = df[item['color']].astype(str)
+            figure = plotly_scatter(color=item['color'], color_continuous_scale=item['color_continuous_scale'],
+                                    custom_data=custom_data, data_frame=df, labels=item['labels'],
                                     title=item['page_title'], x=item['x'], y=item['y'], )
             hover_template = '<br>'.join(
                 ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
