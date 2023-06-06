@@ -77,7 +77,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
             {
                 'color': 'log10_duration_seconds',
                 'color_continuous_scale': sequential.Viridis,
-                'color_discrete' : False,
+                'color_discrete': False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_views': 'log10 of views', 'published': 'Date Published', },
                 'page_title': 'YouTube user {} date/count scatter'.format(short_name),
@@ -87,7 +87,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
             {
                 'color': 'age (days)',
                 'color_continuous_scale': sequential.Viridis,
-                'color_discrete' : False,
+                'color_discrete': False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count scatter'.format(short_name),
@@ -97,7 +97,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
             {
                 'color': 'age (days)',
                 'color_continuous_scale': sequential.Viridis,
-                'color_discrete' : False,
+                'color_discrete': False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_TSNE_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count TSNE scatter'.format(short_name),
@@ -107,7 +107,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
             {
                 'color': 'kmeans_cluster',
                 'color_continuous_scale': sequential.Viridis,
-                'color_discrete' : True,
+                'color_discrete': True,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_KMEANS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count K-means scatter'.format(short_name),
