@@ -21,6 +21,7 @@ from seaborn import scatterplot
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
+from sklearn.metrics import silhouette_score
 
 
 def add_kmeans_cluster(df: DataFrame) -> DataFrame:
@@ -29,11 +30,21 @@ def add_kmeans_cluster(df: DataFrame) -> DataFrame:
                                  input='content', lowercase=True, max_df=1.0, max_features=None, min_df=1,
                                  ngram_range=(1, 3), preprocessor=None, stop_words=None, strip_accents=None,
                                  tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
-    model = KMeans(algorithm='lloyd', copy_x=True, init='k-means++', max_iter=300, n_clusters=12, n_init='auto',
-                   random_state=RANDOM_STATE, tol=0.0001, verbose=1, )
-    model.fit(X=vectorizer.fit_transform(raw_documents=df['keywords'], ), )
-    df['kmeans_cluster'] = model.labels_
-    logger.info(df['kmeans_cluster'].value_counts().to_dict())
+    x = vectorizer.fit_transform(raw_documents=df['keywords'], )
+    scores = {}
+    clusters = {}
+    for n_clusters in range(2, 21):
+        model = KMeans(algorithm='lloyd', copy_x=True, init='k-means++', max_iter=300, n_clusters=n_clusters,
+                       n_init='auto', random_state=RANDOM_STATE, tol=0.0001, verbose=1, )
+        model.fit(X=x, )
+        scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
+                                              random_state=RANDOM_STATE, )
+        clusters[n_clusters] = model.labels_
+    best_key = max(scores, key=lambda x: scores[x])
+
+    df['kmeans_cluster'] = clusters[best_key]
+    logger.info(msg=df['kmeans_cluster'].value_counts().to_dict())
+    logger.info(msg='k-means score: {}'.format(scores[best_key]))
     return df
 
 
