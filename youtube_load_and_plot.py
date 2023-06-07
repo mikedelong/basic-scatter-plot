@@ -18,10 +18,35 @@ from plotly.express import scatter as plotly_scatter
 from plotly.express.colors import qualitative
 from plotly.express.colors import sequential
 from seaborn import scatterplot
+from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score
+
+
+def add_dbscan_cluster(df: DataFrame) -> DataFrame:
+    logger = getLogger(name='add_dbscan_cluster', )
+    vectorizer = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8',
+                                 input='content', lowercase=True, max_df=1.0, max_features=None, min_df=1,
+                                 ngram_range=(1, 3), preprocessor=None, stop_words=None, strip_accents=None,
+                                 tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
+    x = vectorizer.fit_transform(raw_documents=df['keywords'], )
+    scores = {}
+    clusters = {}
+    for n_clusters in range(2, 12):
+        model = DBSCAN(eps=0.5, min_samples=5, metric='euclidean', metric_params=None, algorithm='auto',
+                       leaf_size=30, p=None, n_jobs=None, )
+        model.fit(X=x, )
+        scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
+                                              random_state=RANDOM_STATE, )
+        clusters[n_clusters] = model.labels_
+    best_key = max(scores, key=lambda x: scores[x])
+    column = 'DBSCAN_cluster'
+    df[column] = clusters[best_key]
+    logger.info(msg=df[column].value_counts().to_dict())
+    logger.info(msg='DBSCAN score: {}'.format(scores[best_key]))
+    return df
 
 
 def add_kmeans_cluster(df: DataFrame) -> DataFrame:
@@ -34,17 +59,18 @@ def add_kmeans_cluster(df: DataFrame) -> DataFrame:
     scores = {}
     clusters = {}
     init = ['k-means++', 'random'][1]
+    max_iter = 15
     for n_clusters in range(2, 12):
-        model = KMeans(algorithm='lloyd', copy_x=True, init=init, max_iter=300, n_clusters=n_clusters,
+        model = KMeans(algorithm='lloyd', copy_x=True, init=init, max_iter=max_iter, n_clusters=n_clusters,
                        n_init='auto', random_state=RANDOM_STATE, tol=0.0001, verbose=1, )
         model.fit(X=x, )
         scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
     best_key = max(scores, key=lambda x: scores[x])
-
-    df['kmeans_cluster'] = clusters[best_key]
-    logger.info(msg=df['kmeans_cluster'].value_counts().to_dict())
+    column = 'kmeans_cluster'
+    df[column] = clusters[best_key]
+    logger.info(msg=df[column].value_counts().to_dict())
     logger.info(msg='k-means score: {}'.format(scores[best_key]))
     return df
 
@@ -123,6 +149,15 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
             },
+            {
+                'color': 'DBSCAN_cluster',
+                'color_discrete': True,
+                'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DBSCAN_FILENAME.format(short_name),
+                'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'page_title': 'YouTube user {} duration/count DBSCAN scatter'.format(short_name),
+                'x': 'log10_duration_seconds',
+                'y': 'log10_views',
+            },
         ]:
             if item['color_discrete']:
                 df[item['color']] = df[item['color']].astype(str)
@@ -165,8 +200,9 @@ def main():
     videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
     tsne_columns = ['age (days)', 'duration_seconds', 'views', ]
-    videos_df = add_tsne_components(columns=tsne_columns, df=videos_df, )
+    videos_df = add_dbscan_cluster(df=videos_df, )
     videos_df = add_kmeans_cluster(df=videos_df, )
+    videos_df = add_tsne_components(columns=tsne_columns, df=videos_df, )
 
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
 
@@ -180,6 +216,7 @@ def main():
 OUTPUT_FOLDER = './result/'
 RANDOM_STATE = 1
 SCATTER_FILENAME = 'youtube.matplotlib.scatter.png'
+SCATTER_PLOTLY_DBSCAN_FILENAME = 'youtube.plotly.{}.DBSCAN.scatter.html'
 SCATTER_PLOTLY_DATE_VIEWS_FILENAME = 'youtube.plotly.{}.date-views.scatter.html'
 SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.{}.duration-views.scatter.html'
 SCATTER_PLOTLY_KMEANS_FILENAME = 'youtube.plotly.{}.kmeans.scatter.html'
