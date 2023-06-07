@@ -33,8 +33,9 @@ def add_kmeans_cluster(df: DataFrame) -> DataFrame:
     x = vectorizer.fit_transform(raw_documents=df['keywords'], )
     scores = {}
     clusters = {}
-    for n_clusters in range(2, 21):
-        model = KMeans(algorithm='lloyd', copy_x=True, init='k-means++', max_iter=300, n_clusters=n_clusters,
+    init = ['k-means++', 'random'][1]
+    for n_clusters in range(2, 12):
+        model = KMeans(algorithm='lloyd', copy_x=True, init=init, max_iter=300, n_clusters=n_clusters,
                        n_init='auto', random_state=RANDOM_STATE, tol=0.0001, verbose=1, )
         model.fit(X=x, )
         scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
