@@ -1,4 +1,3 @@
-import math
 from json import dumps
 from json import load
 from logging import INFO
@@ -12,6 +11,7 @@ from matplotlib.pyplot import savefig
 from matplotlib.pyplot import scatter
 from matplotlib.pyplot import title
 from matplotlib.pyplot import ylabel
+from numpy import unique
 from pandas import DataFrame
 from pandas import read_csv
 from pandas import to_datetime
@@ -24,7 +24,6 @@ from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score
-from numpy import unique
 
 
 def add_dbscan_cluster(df: DataFrame) -> DataFrame:
@@ -37,10 +36,10 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
     logger.info(msg='built/fitted vectorizer')
     scores = {}
     clusters = {}
-    eps = 0.25 # was 0.5
-    min_samples = 10 # max(5, int(math.sqrt(len(df)) / 2))
+    eps = 0.25  # was 0.5
+    min_samples = 10  # max(5, int(math.sqrt(len(df)) / 2))
     logger.info(msg='min_samples: {}'.format(min_samples))
-    for n_clusters in range(2, 3): # was (2, 12)
+    for n_clusters in range(2, 3):  # was (2, 12)
         logger.info(msg='running DBSCAN for {} clusters'.format(n_clusters))
         model = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', metric_params=None, algorithm='auto',
                        leaf_size=30, p=None, n_jobs=None, )
