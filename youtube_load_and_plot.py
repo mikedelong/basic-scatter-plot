@@ -40,7 +40,7 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
     eps = 0.25 # was 0.5
     min_samples = 10 # max(5, int(math.sqrt(len(df)) / 2))
     logger.info(msg='min_samples: {}'.format(min_samples))
-    for n_clusters in range(2, 12):
+    for n_clusters in range(2, 3): # was (2, 12)
         logger.info(msg='running DBSCAN for {} clusters'.format(n_clusters))
         model = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', metric_params=None, algorithm='auto',
                        leaf_size=30, p=None, n_jobs=None, )
@@ -48,12 +48,12 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
         scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
-        logger.info(msg='cluster count: {} score: {:07.4f}'.format(len(unique(model.labels_)), scores[n_clusters]))
+        logger.info(msg='cluster count: {} score: {:06.4f}'.format(len(unique(model.labels_)), scores[n_clusters]))
     best_key = max(scores, key=lambda x: scores[x])
     column = 'DBSCAN cluster'
     df[column] = clusters[best_key]
     logger.info(msg=df[column].value_counts().to_dict())
-    logger.info(msg='DBSCAN score: {:07.4f}'.format(scores[best_key]))
+    logger.info(msg='DBSCAN score: {:06.4f}'.format(scores[best_key]))
     return df
 
 
@@ -79,7 +79,7 @@ def add_kmeans_cluster(df: DataFrame) -> DataFrame:
     column = 'kmeans cluster'
     df[column] = clusters[best_key]
     logger.info(msg=df[column].value_counts().to_dict())
-    logger.info(msg='k-means score: {}'.format(scores[best_key]))
+    logger.info(msg='k-means score: {:06.4f}'.format(scores[best_key]))
     return df
 
 
