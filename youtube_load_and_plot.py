@@ -1,3 +1,4 @@
+import math
 from json import dumps
 from json import load
 from logging import INFO
@@ -29,20 +30,21 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
     logger = getLogger(name='add_dbscan_cluster', )
     vectorizer = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8',
                                  input='content', lowercase=True, max_df=1.0, max_features=None, min_df=1,
-                                 ngram_range=(1, 3), preprocessor=None, stop_words=None, strip_accents=None,
+                                 ngram_range=(1, 2), preprocessor=None, stop_words=None, strip_accents=None,
                                  tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
     x = vectorizer.fit_transform(raw_documents=df['keywords'], )
     scores = {}
     clusters = {}
+    min_samples = max(5, int(math.sqrt(len(df))))
     for n_clusters in range(2, 12):
-        model = DBSCAN(eps=0.5, min_samples=5, metric='euclidean', metric_params=None, algorithm='auto',
+        model = DBSCAN(eps=0.5, min_samples=min_samples, metric='euclidean', metric_params=None, algorithm='auto',
                        leaf_size=30, p=None, n_jobs=None, )
         model.fit(X=x, )
         scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
     best_key = max(scores, key=lambda x: scores[x])
-    column = 'DBSCAN_cluster'
+    column = 'DBSCAN cluster'
     df[column] = clusters[best_key]
     logger.info(msg=df[column].value_counts().to_dict())
     logger.info(msg='DBSCAN score: {}'.format(scores[best_key]))
@@ -68,7 +70,7 @@ def add_kmeans_cluster(df: DataFrame) -> DataFrame:
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
     best_key = max(scores, key=lambda x: scores[x])
-    column = 'kmeans_cluster'
+    column = 'kmeans cluster'
     df[column] = clusters[best_key]
     logger.info(msg=df[column].value_counts().to_dict())
     logger.info(msg='k-means score: {}'.format(scores[best_key]))
@@ -141,7 +143,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'y': 'tsne_y',
             },
             {
-                'color': 'kmeans_cluster',
+                'color': 'kmeans cluster',
                 'color_discrete': True,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_KMEANS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
@@ -150,7 +152,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'y': 'log10_views',
             },
             {
-                'color': 'DBSCAN_cluster',
+                'color': 'DBSCAN cluster',
                 'color_discrete': True,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DBSCAN_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
