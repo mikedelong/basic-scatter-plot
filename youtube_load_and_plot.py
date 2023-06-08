@@ -33,16 +33,20 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
                                  ngram_range=(1, 2), preprocessor=None, stop_words=None, strip_accents=None,
                                  tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
     x = vectorizer.fit_transform(raw_documents=df['keywords'], )
+    logger.info(msg='built/fitted vectorizer')
     scores = {}
     clusters = {}
-    min_samples = max(5, int(math.sqrt(len(df))))
+    min_samples = max(5, int(math.sqrt(len(df)) / 2))
+    logger.info(msg='min_samples: {}'.format(min_samples))
     for n_clusters in range(2, 12):
+        logger.info(msg='running DBSCAN for {} clusters'.format(n_clusters))
         model = DBSCAN(eps=0.5, min_samples=min_samples, metric='euclidean', metric_params=None, algorithm='auto',
                        leaf_size=30, p=None, n_jobs=None, )
         model.fit(X=x, )
         scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
+        logger.info(msg='cluster count: {} score: {:05.2f}'.format(n_clusters, scores[n_clusters]))
     best_key = max(scores, key=lambda x: scores[x])
     column = 'DBSCAN cluster'
     df[column] = clusters[best_key]
@@ -201,11 +205,13 @@ def main():
     videos_df['log10_duration_seconds'] = videos_df['duration_seconds'].apply(func=lambda x: log10(1 + x), )
     videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
-    tsne_columns = ['age (days)', 'duration_seconds', 'views', ]
+    logger.info(msg='built initial DataFrame')
     videos_df = add_dbscan_cluster(df=videos_df, )
+    logger.info(msg='added DBSCAN clusters')
     videos_df = add_kmeans_cluster(df=videos_df, )
+    logger.info(msg='added k-means clusters')
+    tsne_columns = ['age (days)', 'duration_seconds', 'views', ]
     videos_df = add_tsne_components(columns=tsne_columns, df=videos_df, )
-
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
 
     make_plot(df=videos_df.sort_values(by='published', ),
