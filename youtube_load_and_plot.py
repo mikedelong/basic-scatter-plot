@@ -24,6 +24,7 @@ from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score
+from numpy import unique
 
 
 def add_dbscan_cluster(df: DataFrame) -> DataFrame:
@@ -36,22 +37,23 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
     logger.info(msg='built/fitted vectorizer')
     scores = {}
     clusters = {}
-    min_samples = max(5, int(math.sqrt(len(df)) / 2))
+    eps = 0.25 # was 0.5
+    min_samples = 10 # max(5, int(math.sqrt(len(df)) / 2))
     logger.info(msg='min_samples: {}'.format(min_samples))
     for n_clusters in range(2, 12):
         logger.info(msg='running DBSCAN for {} clusters'.format(n_clusters))
-        model = DBSCAN(eps=0.5, min_samples=min_samples, metric='euclidean', metric_params=None, algorithm='auto',
+        model = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', metric_params=None, algorithm='auto',
                        leaf_size=30, p=None, n_jobs=None, )
         model.fit(X=x, )
         scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
-        logger.info(msg='cluster count: {} score: {:05.2f}'.format(n_clusters, scores[n_clusters]))
+        logger.info(msg='cluster count: {} score: {:07.4f}'.format(len(unique(model.labels_)), scores[n_clusters]))
     best_key = max(scores, key=lambda x: scores[x])
     column = 'DBSCAN cluster'
     df[column] = clusters[best_key]
     logger.info(msg=df[column].value_counts().to_dict())
-    logger.info(msg='DBSCAN score: {}'.format(scores[best_key]))
+    logger.info(msg='DBSCAN score: {:07.4f}'.format(scores[best_key]))
     return df
 
 
