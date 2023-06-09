@@ -30,16 +30,16 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
     logger = getLogger(name='add_dbscan_cluster', )
     vectorizer = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8',
                                  input='content', lowercase=True, max_df=1.0, max_features=None, min_df=1,
-                                 ngram_range=(1, 2), preprocessor=None, stop_words=None, strip_accents=None,
+                                 ngram_range=(1, 3), preprocessor=None, stop_words=None, strip_accents=None,
                                  tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
     x = vectorizer.fit_transform(raw_documents=df['keywords'], )
     logger.info(msg='built/fitted vectorizer')
     scores = {}
     clusters = {}
-    eps = 0.25  # was 0.5
+    eps = 0.5  # was 0.5
     min_samples = 10  # max(5, int(math.sqrt(len(df)) / 2))
     logger.info(msg='min_samples: {}'.format(min_samples))
-    for n_clusters in range(2, 3):  # was (2, 12)
+    for n_clusters in range(2, 12):  # was (2, 12)
         logger.info(msg='running DBSCAN for {} clusters'.format(n_clusters))
         model = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', metric_params=None, algorithm='auto',
                        leaf_size=30, p=None, n_jobs=None, )
