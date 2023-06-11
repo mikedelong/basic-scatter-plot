@@ -87,8 +87,8 @@ def add_tsne_components(df: DataFrame, columns: list, ) -> DataFrame:
                  metric='euclidean', metric_params=None, min_grad_norm=1e-7, n_components=2, n_iter=500,
                  n_iter_without_progress=100, n_jobs=None, perplexity=30.0, random_state=RANDOM_STATE, verbose=2, )
     tsne_result = model.fit_transform(X=df[columns], )
-    df['tsne_x'] = tsne_result[:, 0]
-    df['tsne_y'] = tsne_result[:, 1]
+    df['t-SNE x'] = tsne_result[:, 0]
+    df['t-SNE y'] = tsne_result[:, 1]
     return df
 
 
@@ -144,8 +144,8 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_TSNE_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count TSNE scatter'.format(short_name),
-                'x': 'tsne_x',
-                'y': 'tsne_y',
+                'x': 't-SNE x',
+                'y': 't-SNE y',
             },
             {
                 'color': 'kmeans cluster',
