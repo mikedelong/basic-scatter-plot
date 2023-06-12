@@ -5,7 +5,11 @@ from logging import getLogger
 
 from arrow import now
 from holoviews import Chord
+from holoviews import Dataset
+from holoviews import dim
 from holoviews import extension
+from holoviews import opts
+from holoviews import output
 from holoviews import save
 from pandas import DataFrame
 from pandas import read_csv
@@ -37,13 +41,22 @@ def main():
     logger.info(msg=df[['Source', 'Destination', ]].head())
     logger.info(msg=df['Protocol'].value_counts().to_dict())
     tcp_df = df.drop(columns=['No.'])[df['Protocol'] == 'TCP']
+    tcp_df = tcp_df[~tcp_df['Source'].str.contains(':')]
+    DEBUG['tcp'] = tcp_df
     logger.info(msg=tcp_df.shape)
     columns = ['Source', 'Destination']
     count_df = tcp_df[columns].groupby(by=columns, as_index=False).size()
     DEBUG['counts'] = count_df
     extension('bokeh', )
+    nodes = Dataset(data=count_df, kdims='Source', vdims='Destination')
+    DEBUG['nodes'] = nodes
     chord = Chord(data=count_df, )
-    chord.opts(width=800, height=800, )
+    chord.opts(
+        opts.Chord(cmap='Viridis', edge_cmap='Viridis', labels='Destination',
+                   node_color=dim('index').str())
+    )
+    output(size=300, )
+
     filename = OUTPUT_FOLDER + settings['data_file'].replace('.csv', '.html')
     save(obj=chord, filename=filename)
 
