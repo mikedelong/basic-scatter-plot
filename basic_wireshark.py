@@ -41,8 +41,9 @@ def main():
     columns = ['Source', 'Destination']
     count_df = tcp_df[columns].groupby(by=columns, as_index=False).size()
     DEBUG['counts'] = count_df
+    extension('bokeh', )
     chord = Chord(data=count_df, )
-    extension('bokeh', width=200)
+    chord.opts(width=800, height=800, )
     filename = OUTPUT_FOLDER + settings['data_file'].replace('.csv', '.html')
     save(obj=chord, filename=filename)
 
