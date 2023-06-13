@@ -48,7 +48,7 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
         logger.info(msg='cluster count: {} score: {:06.4f}'.format(len(unique(model.labels_)), scores[n_clusters]))
-    best_key = max(scores, key=lambda x: scores[x])
+    best_key = max(scores, key=lambda key: scores[key])
     column = 'DBSCAN cluster'
     df[column] = clusters[best_key]
     logger.info(msg=df[column].value_counts().to_dict())
@@ -74,7 +74,7 @@ def add_kmeans_cluster(df: DataFrame) -> DataFrame:
         scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
-    best_key = max(scores, key=lambda x: scores[x])
+    best_key = max(scores, key=lambda key: scores[key])
     column = 'kmeans cluster'
     df[column] = clusters[best_key]
     logger.info(msg=df[column].value_counts().to_dict())
