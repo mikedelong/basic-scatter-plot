@@ -28,11 +28,11 @@ from sklearn.metrics import silhouette_score
 
 def add_dbscan_cluster(df: DataFrame) -> DataFrame:
     logger = getLogger(name='add_dbscan_cluster', )
-    vectorizer = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8',
-                                 input='content', lowercase=True, max_df=1.0, max_features=None, min_df=1,
-                                 ngram_range=(1, 3), preprocessor=None, stop_words=None, strip_accents=None,
-                                 tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
-    x = vectorizer.fit_transform(raw_documents=df['keywords'], )
+    vectors_model = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8',
+                                    input='content', lowercase=True, max_df=1.0, max_features=None, min_df=1,
+                                    ngram_range=(1, 3), preprocessor=None, stop_words=None, strip_accents=None,
+                                    tokenizer=None, token_pattern=r'(?u)\b\w\w+\b', vocabulary=None, )
+    vectors = vectors_model.fit_transform(raw_documents=df['keywords'], )
     logger.info(msg='built/fitted vectorizer')
     scores = {}
     clusters = {}
@@ -43,8 +43,8 @@ def add_dbscan_cluster(df: DataFrame) -> DataFrame:
         logger.info(msg='running DBSCAN for {} clusters'.format(n_clusters))
         model = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', metric_params=None, algorithm='auto',
                        leaf_size=30, p=None, n_jobs=None, )
-        model.fit(X=x, )
-        scores[n_clusters] = silhouette_score(X=x, labels=model.labels_, metric='euclidean', sample_size=None,
+        model.fit(X=vectors, )
+        scores[n_clusters] = silhouette_score(X=vectors, labels=model.labels_, metric='euclidean', sample_size=None,
                                               random_state=RANDOM_STATE, )
         clusters[n_clusters] = model.labels_
         logger.info(msg='cluster count: {} score: {:06.4f}'.format(len(unique(model.labels_)), scores[n_clusters]))
@@ -87,8 +87,8 @@ def add_tsne_components(df: DataFrame, columns: list, ) -> DataFrame:
                  metric='euclidean', metric_params=None, min_grad_norm=1e-7, n_components=2, n_iter=500,
                  n_iter_without_progress=100, n_jobs=None, perplexity=30.0, random_state=RANDOM_STATE, verbose=2, )
     tsne_result = model.fit_transform(X=df[columns], )
-    df['t-SNE x'] = tsne_result[:, 0]
-    df['t-SNE y'] = tsne_result[:, 1]
+    for index, column in enumerate(['t-SNE x', 't-SNE y']):
+        df[column] =  tsne_result[:, index]
     return df
 
 
@@ -119,12 +119,14 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, plot_settin
         close()
     elif plotting_package == 'plotly':
         custom_data = ['name', 'published', 'views_with_commas']
+        # think about moving this from code to data
         for item in [
             {
                 'color': 'log10_duration_seconds',
                 'color_discrete': False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_views': 'log10 of views', 'published': 'Date Published', },
+                'name': 'date/views',
                 'page_title': 'YouTube user {} date/count scatter'.format(short_name),
                 'skip': False,
                 'x': 'published',
@@ -135,6 +137,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, plot_settin
                 'color_discrete': False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'name': 'duration/views',
                 'page_title': 'YouTube user {} duration/count scatter'.format(short_name),
                 'skip': False,
                 'x': 'log10_duration_seconds',
@@ -145,6 +148,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, plot_settin
                 'color_discrete': False,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_TSNE_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'name': 't-SNE',
                 'page_title': 'YouTube user {} duration/count TSNE scatter'.format(short_name),
                 'skip': False,
                 'x': 't-SNE x',
@@ -155,6 +159,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, plot_settin
                 'color_discrete': True,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_KMEANS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'name': 'K-Means',
                 'page_title': 'YouTube user {} duration/count K-means scatter'.format(short_name),
                 'skip': False,
                 'x': 'log10_duration_seconds',
@@ -165,19 +170,22 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, plot_settin
                 'color_discrete': True,
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DBSCAN_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
+                'name': 'DBSCAN',
                 'page_title': 'YouTube user {} duration/count DBSCAN scatter'.format(short_name),
                 'skip': plot_settings['skip_dbscan'],
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
             },
         ]:
+            # hack: treat one case specially
             if not item['skip']:
+                plot_df = df if item['name'] != 'DBSCAN' else df[df['DBSCAN cluster'] != -1]
                 if item['color_discrete']:
-                    df[item['color']] = df[item['color']].astype(str)
+                    plot_df[item['color']] = plot_df[item['color']].astype(str)
                 figure = plotly_scatter(color=item['color'], color_continuous_scale=sequential.Viridis,
                                         color_discrete_sequence=qualitative.Alphabet, custom_data=custom_data,
-                                        data_frame=df, labels=item['labels'], title=item['page_title'], x=item['x'],
-                                        y=item['y'], )
+                                        data_frame=plot_df, labels=item['labels'], title=item['page_title'],
+                                        x=item['x'], y=item['y'], )
                 hover_template = '<br>'.join(
                     ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
                 figure.update_traces(hovertemplate=hover_template, )
