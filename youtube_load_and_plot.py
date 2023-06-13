@@ -103,7 +103,7 @@ def load_settings(filename: str, ) -> dict:
     return {key: value for key, value in result.items() if key in result['keys']}
 
 
-def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
+def make_plot(plotting_package: str, df: DataFrame, short_name: str, plot_settings: dict):
     logger = getLogger(name='make_plot', )
     logger.info(msg='plotting package: {}'.format(plotting_package, ), )
     if plotting_package not in {'matplotlib.pyplot', 'plotly', 'seaborn'}:
@@ -166,7 +166,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DBSCAN_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count DBSCAN scatter'.format(short_name),
-                'skip': SKIP_DBSCAN,
+                'skip': plot_settings['skip_dbscan'],
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
             },
@@ -213,7 +213,8 @@ def main():
     videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
     logger.info(msg='built initial DataFrame')
-    if not SKIP_DBSCAN:
+    skip_dbscan = settings['skip_dbscan']
+    if not skip_dbscan:
         videos_df = add_dbscan_cluster(df=videos_df, )
         logger.info(msg='added DBSCAN clusters')
     videos_df = add_kmeans_cluster(df=videos_df, )
@@ -223,8 +224,9 @@ def main():
     logger.info(msg='data has shape: {}'.format(videos_df.shape, ))
 
     make_plot(df=videos_df.sort_values(by='published', ),
-              short_name=[piece for piece in settings['input_data_file'].split('-') if piece.startswith('@')][0],
-              plotting_package=settings['plotting_package'], )
+              plot_settings={key: value for key, value in settings.items() if key == 'skip_dbscan'},
+              plotting_package=settings['plotting_package'],
+              short_name=[piece for piece in settings['input_data_file'].split('-') if piece.startswith('@')][0], )
     time_seconds = (now() - time_start).total_seconds()
     logger.info(msg='done: {:02d}:{:05.2f}'.format(int(time_seconds // 60), time_seconds % 60, ))
 
@@ -238,7 +240,6 @@ SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.{}.duration-views.scatt
 SCATTER_PLOTLY_KMEANS_FILENAME = 'youtube.plotly.{}.kmeans.scatter.html'
 SCATTER_PLOTLY_TSNE_FILENAME = 'youtube.plotly.{}.tsne.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
-SKIP_DBSCAN = True
 USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', 'keywords', ]
 
 if __name__ == '__main__':
