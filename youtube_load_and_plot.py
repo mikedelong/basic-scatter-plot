@@ -126,6 +126,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DATE_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_views': 'log10 of views', 'published': 'Date Published', },
                 'page_title': 'YouTube user {} date/count scatter'.format(short_name),
+                'skip': False,
                 'x': 'published',
                 'y': 'log10_views',
             },
@@ -135,6 +136,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DURATION_VIEWS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count scatter'.format(short_name),
+                'skip': False,
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
             },
@@ -144,6 +146,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_TSNE_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count TSNE scatter'.format(short_name),
+                'skip': False,
                 'x': 't-SNE x',
                 'y': 't-SNE y',
             },
@@ -153,6 +156,7 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_KMEANS_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count K-means scatter'.format(short_name),
+                'skip': False,
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
             },
@@ -162,22 +166,24 @@ def make_plot(plotting_package: str, df: DataFrame, short_name: str, ):
                 'filename': OUTPUT_FOLDER + SCATTER_PLOTLY_DBSCAN_FILENAME.format(short_name),
                 'labels': {'log10_duration_seconds': 'log10 of duration (sec)', 'log10_views': 'log10 of views'},
                 'page_title': 'YouTube user {} duration/count DBSCAN scatter'.format(short_name),
+                'skip': SKIP_DBSCAN,
                 'x': 'log10_duration_seconds',
                 'y': 'log10_views',
             },
         ]:
-            if item['color_discrete']:
-                df[item['color']] = df[item['color']].astype(str)
-            figure = plotly_scatter(color=item['color'], color_continuous_scale=sequential.Viridis,
-                                    color_discrete_sequence=qualitative.Alphabet, custom_data=custom_data,
-                                    data_frame=df, labels=item['labels'], title=item['page_title'], x=item['x'],
-                                    y=item['y'], )
-            hover_template = '<br>'.join(
-                ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
-            figure.update_traces(hovertemplate=hover_template, )
-            filename = item['filename']
-            logger.info(msg='saving plot to {}'.format(filename), )
-            figure.write_html(filename)
+            if not item['skip']:
+                if item['color_discrete']:
+                    df[item['color']] = df[item['color']].astype(str)
+                figure = plotly_scatter(color=item['color'], color_continuous_scale=sequential.Viridis,
+                                        color_discrete_sequence=qualitative.Alphabet, custom_data=custom_data,
+                                        data_frame=df, labels=item['labels'], title=item['page_title'], x=item['x'],
+                                        y=item['y'], )
+                hover_template = '<br>'.join(
+                    ['video: %{customdata[0]}', 'date: %{customdata[1]}', 'views: %{customdata[2]}'])
+                figure.update_traces(hovertemplate=hover_template, )
+                filename = item['filename']
+                logger.info(msg='saving plot to {}'.format(filename), )
+                figure.write_html(filename)
     elif plotting_package == 'seaborn':
         filename = OUTPUT_FOLDER + SCATTERPLOT_FILENAME
         scatterplot(data=df, x='published', y='log10_views', )
@@ -207,8 +213,9 @@ def main():
     videos_df['views_with_commas'] = videos_df['views'].apply(func=lambda x: '{:,}'.format(x), )
     videos_df['year_published'] = videos_df['published'].apply(func=lambda x: x.split('-')[0])
     logger.info(msg='built initial DataFrame')
-    videos_df = add_dbscan_cluster(df=videos_df, )
-    logger.info(msg='added DBSCAN clusters')
+    if not SKIP_DBSCAN:
+        videos_df = add_dbscan_cluster(df=videos_df, )
+        logger.info(msg='added DBSCAN clusters')
     videos_df = add_kmeans_cluster(df=videos_df, )
     logger.info(msg='added k-means clusters')
     tsne_columns = ['age (days)', 'duration_seconds', 'views', ]
@@ -231,6 +238,7 @@ SCATTER_PLOTLY_DURATION_VIEWS_FILENAME = 'youtube.plotly.{}.duration-views.scatt
 SCATTER_PLOTLY_KMEANS_FILENAME = 'youtube.plotly.{}.kmeans.scatter.html'
 SCATTER_PLOTLY_TSNE_FILENAME = 'youtube.plotly.{}.tsne.scatter.html'
 SCATTERPLOT_FILENAME = 'youtube.seaborn.scatterplot.png'
+SKIP_DBSCAN = True
 USECOLS = ['log10_views', 'name', 'published', 'views', 'duration', 'keywords', ]
 
 if __name__ == '__main__':
